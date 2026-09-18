@@ -2,8 +2,7 @@ import sys
 from engine import Engine
 
 
-VERSION = "1.0.0"
-
+VERSION = "1.5.0"
 
 def show_help():
     print("Japanese Language")
