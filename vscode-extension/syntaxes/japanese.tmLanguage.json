@@ -1,0 +1,48 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "Japanese Language",
+    "scopeName": "source.japanese",
+
+    "patterns": [
+        {
+            "name": "comment.line.double-slash.japanese",
+            "match": "//.*$"
+        },
+
+        {
+            "name": "entity.name.function.japanese",
+            "match": "表示する|入力する"
+        },
+
+        {
+            "name": "keyword.control.japanese",
+            "match": "もし|それ以外|終わり|繰り返す|抜ける"
+        },
+
+        {
+            "name": "storage.type.japanese",
+            "match": "変数|リスト"
+        },
+
+        {
+            "name": "support.function.japanese",
+            "match": "計算する|待つ|増やす|減らす|掛ける|割る|余り|数字にする|文字にする|文字をつなぐ|大文字にする|小文字にする|最大|最小|絶対値|四捨五入|存在する|追加する|削除する|取り出す|長さ"
+        },
+
+        {
+            "name": "keyword.operator.japanese",
+            "match": ">=|<=|==|!=|\\+|-|\\*|/|%|=|>|<"
+        },
+
+        {
+            "name": "string.quoted.japanese",
+            "begin": "「",
+            "end": "」"
+        },
+
+        {
+            "name": "constant.numeric.japanese",
+            "match": "\\b[0-9]+(?:\\.[0-9]+)?\\b"
+        }
+    ]
+}

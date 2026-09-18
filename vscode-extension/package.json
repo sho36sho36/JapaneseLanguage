@@ -1,0 +1,98 @@
+{
+    "name": "japanese-language",
+    "displayName": "Japanese Language",
+    "description": "日本語で書ける自作プログラミング言語",
+    "version": "0.1.0",
+    "publisher": "japanese-language",
+    "engines": {
+        "vscode": "^1.80.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "japanese",
+                "aliases": [
+                    "Japanese Language",
+                    "日本語"
+                ],
+                "extensions": [
+                    ".jp"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "japanese",
+                "scopeName": "source.japanese",
+                "path": "./syntaxes/japanese.tmLanguage.json"
+            }
+        ],
+        "themes": [
+            {
+                "label": "Japanese Language Colors",
+                "uiTheme": "vs-dark",
+                "path": "./themes/japanese-color-theme.json"
+            }
+        ]
+    },
+    "tokenColors": [
+        {
+            "scope": "support.function.display.japanese",
+            "settings": {
+                "foreground": "#4FC3F7"
+            }
+        },
+        {
+            "scope": "variable.language.japanese",
+            "settings": {
+                "foreground": "#CE93D8"
+            }
+        },
+        {
+            "scope": "support.function.input.japanese",
+            "settings": {
+                "foreground": "#81C784"
+            }
+        },
+        {
+            "scope": "support.function.calculate.japanese",
+            "settings": {
+                "foreground": "#FFB74D"
+            }
+        },
+        {
+            "scope": "support.function.wait.japanese",
+            "settings": {
+                "foreground": "#FFF176"
+            }
+        },
+        {
+            "scope": "string.quoted.japanese",
+            "settings": {
+                "foreground": "#66BB6A"
+            }
+        },
+        {
+            "scope": "constant.numeric.japanese",
+            "settings": {
+                "foreground": "#4DD0E1"
+            }
+        },
+        {
+            "scope": "keyword.operator.japanese",
+            "settings": {
+                "foreground": "#EF5350"
+            }
+        },
+        {
+            "scope": "comment.line.japanese",
+            "settings": {
+                "foreground": "#808080"
+            }
+        }
+    ]
+}

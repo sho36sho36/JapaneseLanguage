@@ -1,0 +1,61 @@
+{
+    "name": "Japanese Language Colors",
+    "type": "dark",
+    "colors": {},
+    "tokenColors": [
+        {
+            "scope": "support.function.display.japanese",
+            "settings": {
+                "foreground": "#42A5F5"
+            }
+        },
+        {
+            "scope": "variable.language.japanese",
+            "settings": {
+                "foreground": "#AB47BC"
+            }
+        },
+        {
+            "scope": "support.function.input.japanese",
+            "settings": {
+                "foreground": "#66BB6A"
+            }
+        },
+        {
+            "scope": "support.function.calculate.japanese",
+            "settings": {
+                "foreground": "#FFA726"
+            }
+        },
+        {
+            "scope": "support.function.wait.japanese",
+            "settings": {
+                "foreground": "#FFCA28"
+            }
+        },
+        {
+            "scope": "string.quoted.japanese",
+            "settings": {
+                "foreground": "#66BB6A"
+            }
+        },
+        {
+            "scope": "constant.numeric.japanese",
+            "settings": {
+                "foreground": "#26C6DA"
+            }
+        },
+        {
+            "scope": "keyword.operator.japanese",
+            "settings": {
+                "foreground": "#EF5350"
+            }
+        },
+        {
+            "scope": "comment.line.japanese",
+            "settings": {
+                "foreground": "#78909C"
+            }
+        }
+    ]
+}
