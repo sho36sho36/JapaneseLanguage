@@ -1,0 +1,396 @@
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    font-family:
+        "Segoe UI",
+        "Yu Gothic",
+        "Meiryo",
+        sans-serif;
+
+    background: #f3f4f6;
+    color: #222;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
+}
+
+
+/* =========================
+   Header
+========================= */
+
+header {
+    height: 64px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 8px 16px;
+
+    background: #1f2937;
+    color: white;
+
+    flex-shrink: 0;
+}
+
+header h1 {
+    margin: 0;
+
+    font-size: 20px;
+    font-weight: 700;
+}
+
+header span {
+    font-size: 12px;
+    color: #cbd5e1;
+}
+
+
+/* =========================
+   Navigation
+========================= */
+
+nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    padding: 8px 10px;
+
+    background: white;
+    border-bottom: 1px solid #d1d5db;
+
+    flex-shrink: 0;
+
+    overflow-x: auto;
+}
+
+nav button {
+    white-space: nowrap;
+}
+
+
+/* =========================
+   Buttons
+========================= */
+
+button {
+    border: 1px solid #cbd5e1;
+
+    background: white;
+    color: #1f2937;
+
+    border-radius: 6px;
+
+    padding: 7px 11px;
+
+    font-size: 13px;
+
+    cursor: pointer;
+
+    transition:
+        background 0.15s,
+        transform 0.05s;
+}
+
+button:hover {
+    background: #f1f5f9;
+}
+
+button:active {
+    transform: translateY(1px);
+}
+
+#runButton {
+    background: #16a34a;
+    border-color: #16a34a;
+    color: white;
+    font-weight: bold;
+}
+
+#runButton:hover {
+    background: #15803d;
+}
+
+
+/* =========================
+   Main
+========================= */
+
+main {
+    flex: 1;
+
+    min-height: 0;
+    min-width: 0;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        minmax(0, 1fr);
+
+    gap: 10px;
+
+    padding: 10px;
+}
+
+
+/* =========================
+   Panels
+========================= */
+
+.editor-panel,
+.output-panel {
+    min-width: 0;
+    min-height: 0;
+
+    background: white;
+
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+
+    overflow: hidden;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.editor-panel h2,
+.output-panel h2 {
+    height: 42px;
+
+    margin: 0;
+
+    padding: 0 12px;
+
+    display: flex;
+    align-items: center;
+
+    background: #f8fafc;
+
+    border-bottom: 1px solid #e5e7eb;
+
+    font-size: 14px;
+    font-weight: bold;
+
+    flex-shrink: 0;
+}
+
+
+/* =========================
+   Editor
+========================= */
+
+#editor {
+    display: block;
+
+    flex: 1;
+
+    min-width: 0;
+    min-height: 0;
+
+    width: 100%;
+    height: 100%;
+
+    resize: none;
+
+    border: none;
+    outline: none;
+
+    padding: 14px;
+
+    background: #111827;
+    color: #f8fafc;
+
+    font-family:
+        Consolas,
+        "Cascadia Code",
+        "Yu Gothic",
+        monospace;
+
+    font-size: 14px;
+    line-height: 1.6;
+
+    tab-size: 4;
+
+    overflow: auto;
+
+    white-space: pre;
+}
+
+
+/* =========================
+   Output
+========================= */
+
+#output {
+    flex: 1;
+
+    min-width: 0;
+    min-height: 0;
+
+    margin: 0;
+    padding: 14px;
+
+    background: #0f172a;
+    color: #e2e8f0;
+
+    font-family:
+        Consolas,
+        "Cascadia Code",
+        "Yu Gothic",
+        monospace;
+
+    font-size: 14px;
+    line-height: 1.6;
+
+    white-space: pre-wrap;
+
+    overflow: auto;
+}
+
+
+/* =========================
+   Footer
+========================= */
+
+footer {
+    height: 32px;
+
+    display: flex;
+    align-items: center;
+
+    padding: 0 12px;
+
+    background: #e5e7eb;
+    color: #475569;
+
+    font-size: 12px;
+
+    flex-shrink: 0;
+}
+
+
+/* =========================
+   Mobile
+========================= */
+
+@media (max-width: 800px) {
+
+    body {
+        overflow: hidden;
+    }
+
+    header {
+        height: auto;
+        min-height: 56px;
+
+        padding: 8px 12px;
+    }
+
+    header h1 {
+        font-size: 18px;
+    }
+
+    header span {
+        font-size: 11px;
+    }
+
+    nav {
+        padding: 6px;
+
+        overflow-x: auto;
+        flex-wrap: nowrap;
+    }
+
+    nav button {
+        flex-shrink: 0;
+    }
+
+    main {
+        grid-template-columns: 1fr 1fr;
+
+        gap: 6px;
+
+        padding: 6px;
+
+        min-height: 0;
+    }
+
+    .editor-panel h2,
+    .output-panel h2 {
+        height: 38px;
+
+        font-size: 13px;
+    }
+
+    #editor,
+    #output {
+        font-size: 13px;
+        padding: 10px;
+    }
+
+    footer {
+        height: 28px;
+
+        font-size: 11px;
+    }
+}
+
+
+/* =========================
+   Very small screens
+========================= */
+
+@media (max-width: 450px) {
+
+    header {
+        padding: 7px 9px;
+    }
+
+    header h1 {
+        font-size: 16px;
+    }
+
+    header span {
+        font-size: 10px;
+    }
+
+    nav button {
+        padding: 6px 8px;
+        font-size: 12px;
+    }
+
+    main {
+        gap: 4px;
+        padding: 4px;
+    }
+
+    .editor-panel h2,
+    .output-panel h2 {
+        height: 36px;
+
+        padding: 0 8px;
+
+        font-size: 12px;
+    }
+
+    #editor,
+    #output {
+        font-size: 12px;
+        padding: 8px;
+    }
+}

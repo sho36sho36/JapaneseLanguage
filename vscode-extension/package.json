@@ -2,7 +2,7 @@
     "name": "japanese-language",
     "displayName": "Japanese Language",
     "description": "日本語で書ける自作プログラミング言語",
-    "version": "1.5.0",
+    "version": "2.0.0",
     "publisher": "japanese-language",
     "engines": {
         "vscode": "^1.80.0"

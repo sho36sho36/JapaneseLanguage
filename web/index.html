@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Japanese Language Web</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+</head>
+
+<body>
+
+<header>
+    <h1>Japanese Language</h1>
+    <span>Web v2.0.0</span>
+</header>
+
+<nav>
+    <button id="openButton">開く</button>
+    <button id="saveButton">保存</button>
+    <button id="saveAsButton">
+        名前を付けて保存
+    </button>
+    <button id="runButton">▶ 実行</button>
+    <button id="clearButton">クリア</button>
+</nav>
+
+<main>
+
+<section class="editor-panel">
+    <h2>コード</h2>
+
+    <textarea
+        id="editor"
+        spellcheck="false"
+        placeholder="ここに .jp のコードを書いてください"
+    ></textarea>
+</section>
+
+<section class="output-panel">
+    <h2>実行結果</h2>
+
+    <pre id="output"></pre>
+</section>
+
+</main>
+
+<footer>
+    <span id="status">
+        Japanese Language Web v2.0.0
+    </span>
+</footer>
+
+<script src="app.js"></script>
+
+</body>
+</html>

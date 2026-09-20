@@ -1,2 +1,2 @@
 @echo off
-py "%~dp0jp.py" %*
+py -3.14 -m pc.jp %*
