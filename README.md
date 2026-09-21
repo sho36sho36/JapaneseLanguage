@@ -42,7 +42,7 @@ JavaScriptエンジン
 
 以下を開くことによって、ネットがあればどこでもできます。
 ```text
-https://sho36sho36.github.io/JapaneseLanguage/?utm_source=chatgpt.com
+https://sho36sho36.github.io/JapaneseLanguage/
 ```
 
 
@@ -90,6 +90,10 @@ Webブラウザで利用できます。
 Web版はJavaScriptで動作するため、Pythonを実行する必要はありません。
 
 ---
+
+## URL版
+
+ファイルダウンロードも不要。ブラウザだけあればOK。
 
 # ダウンロード
 
@@ -144,6 +148,14 @@ Web版のソースを変更した場合は、次のコマンドで再ビルド�
 ```powershell
 cd web
 .\build-web.cmd
+```
+
+# URL版
+
+以下を開くだけ
+
+```text
+https://sho36sho36.github.io/JapaneseLanguage/
 ```
 
 ---
@@ -917,6 +929,7 @@ v2.0.0では、次のような機能を組み合わせたプログラムを実�
 - esbuildによるWeb版バンドルに対応
 - VSCode拡張機能を継続して提供
 - プロジェクト構成を整理
+- URL版を追加
 
 ## v1.4.0
 
