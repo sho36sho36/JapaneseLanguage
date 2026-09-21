@@ -18,6 +18,7 @@ function createEngine() {
 
 async function runProgram() {
     output.textContent = "";
+    setStatus("実行中...");
 
     try {
         const engine = createEngine();
@@ -27,9 +28,43 @@ async function runProgram() {
         );
 
         setStatus("実行完了");
+
     } catch (error) {
-        output.textContent +=
-            `エラー: ${error.message}\n`;
+        const lines = [];
+
+        lines.push("実行中にエラーが発生しました。");
+
+        if (error?.lineNumber !== undefined) {
+            lines.push(
+                `行番号: ${error.lineNumber}`
+            );
+        }
+
+        if (error?.message) {
+            lines.push(
+                `エラー: ${error.message}`
+            );
+        }
+
+        if (error?.cause) {
+            lines.push(
+                `原因: ${error.cause}`
+            );
+        }
+
+        if (error?.line) {
+            lines.push(
+                `コード: ${error.line}`
+            );
+        }
+
+        if (lines.length === 1) {
+            lines.push(
+                `エラー: ${String(error)}`
+            );
+        }
+
+        output.textContent = lines.join("\n");
 
         setStatus("実行エラー");
     }
@@ -219,5 +254,5 @@ editor?.addEventListener(
 loadLocal();
 
 setStatus(
-    "Japanese Language Web v2.0.0"
+    "Japanese Language Web v2.1.0"
 );

@@ -1225,6 +1225,7 @@
   }
   async function runProgram() {
     output.textContent = "";
+    setStatus("\u5B9F\u884C\u4E2D...");
     try {
       const engine = createEngine();
       await engine.run(
@@ -1232,8 +1233,34 @@
       );
       setStatus("\u5B9F\u884C\u5B8C\u4E86");
     } catch (error) {
-      output.textContent += `\u30A8\u30E9\u30FC: ${error.message}
-`;
+      const lines = [];
+      lines.push("\u5B9F\u884C\u4E2D\u306B\u30A8\u30E9\u30FC\u304C\u767A\u751F\u3057\u307E\u3057\u305F\u3002");
+      if (error?.lineNumber !== void 0) {
+        lines.push(
+          `\u884C\u756A\u53F7: ${error.lineNumber}`
+        );
+      }
+      if (error?.message) {
+        lines.push(
+          `\u30A8\u30E9\u30FC: ${error.message}`
+        );
+      }
+      if (error?.cause) {
+        lines.push(
+          `\u539F\u56E0: ${error.cause}`
+        );
+      }
+      if (error?.line) {
+        lines.push(
+          `\u30B3\u30FC\u30C9: ${error.line}`
+        );
+      }
+      if (lines.length === 1) {
+        lines.push(
+          `\u30A8\u30E9\u30FC: ${String(error)}`
+        );
+      }
+      output.textContent = lines.join("\n");
       setStatus("\u5B9F\u884C\u30A8\u30E9\u30FC");
     }
   }
@@ -1361,6 +1388,6 @@
   );
   loadLocal();
   setStatus(
-    "Japanese Language Web v2.0.0"
+    "Japanese Language Web v2.1.0"
   );
 })();
