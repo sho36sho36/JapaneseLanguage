@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "build": "esbuild web/main.js --bundle --format=iife --outfile=web/app.js"
+  },
   "devDependencies": {
     "esbuild": "^0.28.2"
   }

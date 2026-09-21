@@ -1,5 +1,7 @@
 export class JapaneseParser {
+
     constructor() {
+
         this.operators = [
             "===",
             "!==",
@@ -17,23 +19,29 @@ export class JapaneseParser {
         ];
     }
 
-    // ========================================
+
+    // ============================================================
     // 値を解析
-    // ========================================
+    // ============================================================
 
     parseValue(expression, runtime) {
-        if (expression === undefined || expression === null) {
+
+        if (
+            expression === undefined ||
+            expression === null
+        ) {
             return "";
         }
 
         let value = String(expression).trim();
 
-        // 空文字
+
         if (value === "") {
             return "";
         }
 
-        // 「文字列」
+
+        // 日本語文字列
         if (
             value.startsWith("「") &&
             value.endsWith("」")
@@ -41,7 +49,8 @@ export class JapaneseParser {
             return value.slice(1, -1);
         }
 
-        // 通常の "文字列"
+
+        // "文字列"
         if (
             value.length >= 2 &&
             value.startsWith('"') &&
@@ -50,7 +59,8 @@ export class JapaneseParser {
             return value.slice(1, -1);
         }
 
-        // 通常の '文字列'
+
+        // '文字列'
         if (
             value.length >= 2 &&
             value.startsWith("'") &&
@@ -59,7 +69,8 @@ export class JapaneseParser {
             return value.slice(1, -1);
         }
 
-        // true / false
+
+        // 真偽値
         if (value === "true") {
             return true;
         }
@@ -76,6 +87,7 @@ export class JapaneseParser {
             return false;
         }
 
+
         // null
         if (
             value === "null" ||
@@ -84,6 +96,7 @@ export class JapaneseParser {
             return null;
         }
 
+
         // 数値
         if (
             /^[-+]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value)
@@ -91,87 +104,141 @@ export class JapaneseParser {
             return Number(value);
         }
 
+
         // 変数
-        if (runtime && runtime.exists(value)) {
+        if (
+            runtime &&
+            runtime.exists(value)
+        ) {
             return runtime.get(value);
         }
+
 
         // 配列インデックス
         const indexMatch = value.match(
             /^(.+)\[(-?\d+)\]$/
         );
 
-        if (indexMatch && runtime) {
-            const [, name, indexText] = indexMatch;
+        if (
+            indexMatch &&
+            runtime
+        ) {
 
-            const target = runtime.get(
-                name.trim()
-            );
+            const [, name, indexText] =
+                indexMatch;
 
-            const index = Number(indexText);
+            const target =
+                runtime.get(name.trim());
+
+            const index =
+                Number(indexText);
 
             if (Array.isArray(target)) {
                 return target[index];
             }
         }
 
+
         // 計算式
         if (this.looksLikeExpression(value)) {
+
             try {
+
                 return this.evaluate(
                     value,
                     runtime
                 );
+
             } catch {
-                // 計算式として失敗した場合は
-                // 下の文字列として扱う
+
+                // 文字列として扱う
             }
         }
 
-        // それ以外は文字列
+
         return value;
     }
 
-    // ========================================
+
+    // ============================================================
+    // 数値として解析
+    // ============================================================
+
+    parseNumber(expression, runtime) {
+
+        const value =
+            this.parseValue(
+                expression,
+                runtime
+            );
+
+        if (
+            typeof value !== "number" ||
+            !Number.isFinite(value)
+        ) {
+
+            throw new Error(
+                `「${expression}」は数値ではありません。`
+            );
+        }
+
+        return value;
+    }
+
+
+    // ============================================================
     // 計算式かどうか
-    // ========================================
+    // ============================================================
 
     looksLikeExpression(expression) {
+
         return (
             /[+\-*/%]/.test(expression) ||
             />=|<=|===|!==|==|!=|>|</.test(expression)
         );
     }
 
-    // ========================================
+
+    // ============================================================
     // 計算・条件式
-    // ========================================
+    // ============================================================
 
     evaluate(expression, runtime) {
-        let expr = String(expression).trim();
+
+        let expr =
+            String(expression).trim();
+
 
         if (expr === "") {
-            return "";
+            throw new Error(
+                "式が空です。"
+            );
         }
 
-        // 日本語の真偽値
+
+        // 真偽値
         expr = expr
             .replace(/\b真\b/g, "true")
             .replace(/\b偽\b/g, "false");
 
-        // 「文字列」を JavaScript 文字列へ
+
+        // 日本語文字列
         expr = expr.replace(
             /「([^「」]*)」/g,
-            (_, text) => JSON.stringify(text)
+            (_, text) =>
+                JSON.stringify(text)
         );
 
-        // 変数名を安全な一時変数へ置換
+
+        // 変数
         const variables = [];
 
         if (runtime) {
+
             for (
                 const name of runtime.names()
             ) {
+
                 const safeName =
                     `__jp_var_${variables.length}`;
 
@@ -194,7 +261,9 @@ export class JapaneseParser {
             }
         }
 
+
         try {
+
             const names =
                 variables.map(
                     item => item.safeName
@@ -205,60 +274,76 @@ export class JapaneseParser {
                     item => item.value
                 );
 
+
             const fn = new Function(
                 ...names,
                 `"use strict"; return (${expr});`
             );
 
-            return fn(...values);
+
+            const result =
+                fn(...values);
+
+
+            return result;
 
         } catch (error) {
+
             throw new Error(
-                `式を計算できません: ${expression}`
+                `式「${expression}」を計算できません。`
             );
         }
     }
 
-    // ========================================
+
+    // ============================================================
     // 引数を分割
-    //
-    // 例:
-    // 10, 50, 20
-    //
-    // ↓
-    // ["10", "50", "20"]
-    // ========================================
+    // ============================================================
 
     splitArguments(expression) {
+
         const result = [];
 
         let current = "";
         let depth = 0;
+
         let inJapaneseQuote = false;
         let inDoubleQuote = false;
         let inSingleQuote = false;
 
-        for (const char of String(expression)) {
 
-            // 「」
+        for (
+            const char of String(expression)
+        ) {
+
+            // 「
             if (
                 char === "「" &&
                 !inDoubleQuote &&
                 !inSingleQuote
             ) {
+
                 inJapaneseQuote = true;
+
                 current += char;
+
                 continue;
             }
 
+
+            // 」
             if (
                 char === "」" &&
                 inJapaneseQuote
             ) {
+
                 inJapaneseQuote = false;
+
                 current += char;
+
                 continue;
             }
+
 
             // "
             if (
@@ -266,12 +351,15 @@ export class JapaneseParser {
                 !inJapaneseQuote &&
                 !inSingleQuote
             ) {
+
                 inDoubleQuote =
                     !inDoubleQuote;
 
                 current += char;
+
                 continue;
             }
+
 
             // '
             if (
@@ -279,12 +367,15 @@ export class JapaneseParser {
                 !inJapaneseQuote &&
                 !inDoubleQuote
             ) {
+
                 inSingleQuote =
                     !inSingleQuote;
 
                 current += char;
+
                 continue;
             }
+
 
             // (
             if (
@@ -293,10 +384,14 @@ export class JapaneseParser {
                 !inDoubleQuote &&
                 !inSingleQuote
             ) {
+
                 depth++;
+
                 current += char;
+
                 continue;
             }
+
 
             // )
             if (
@@ -305,16 +400,20 @@ export class JapaneseParser {
                 !inDoubleQuote &&
                 !inSingleQuote
             ) {
-                depth = Math.max(
-                    0,
-                    depth - 1
-                );
+
+                depth =
+                    Math.max(
+                        0,
+                        depth - 1
+                    );
 
                 current += char;
+
                 continue;
             }
 
-            // カンマ
+
+            // ,
             if (
                 char === "," &&
                 !inJapaneseQuote &&
@@ -322,33 +421,46 @@ export class JapaneseParser {
                 !inSingleQuote &&
                 depth === 0
             ) {
-                if (current.trim() !== "") {
+
+                if (
+                    current.trim() !== ""
+                ) {
+
                     result.push(
                         current.trim()
                     );
                 }
 
                 current = "";
+
                 continue;
             }
+
 
             current += char;
         }
 
-        if (current.trim() !== "") {
+
+        if (
+            current.trim() !== ""
+        ) {
+
             result.push(
                 current.trim()
             );
         }
 
+
         return result;
     }
 
-    // ========================================
+
+    // ============================================================
     // 正規表現用エスケープ
-    // ========================================
+    // ============================================================
 
     escapeRegExp(text) {
+
         return String(text).replace(
             /[.*+?^${}()|[\]\\]/g,
             "\\$&"
