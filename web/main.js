@@ -30,41 +30,8 @@ async function runProgram() {
         setStatus("実行完了");
 
     } catch (error) {
-        const lines = [];
-
-        lines.push("実行中にエラーが発生しました。");
-
-        if (error?.lineNumber !== undefined) {
-            lines.push(
-                `行番号: ${error.lineNumber}`
-            );
-        }
-
-        if (error?.message) {
-            lines.push(
-                `エラー: ${error.message}`
-            );
-        }
-
-        if (error?.cause) {
-            lines.push(
-                `原因: ${error.cause}`
-            );
-        }
-
-        if (error?.line) {
-            lines.push(
-                `コード: ${error.line}`
-            );
-        }
-
-        if (lines.length === 1) {
-            lines.push(
-                `エラー: ${String(error)}`
-            );
-        }
-
-        output.textContent = lines.join("\n");
+        output.textContent =
+            error?.message || String(error);
 
         setStatus("実行エラー");
     }
@@ -77,34 +44,38 @@ function saveLocal() {
     );
 
     localStorage.setItem(
-        "japanese-language-file",
+        "japanese-language-file-name",
         currentFileName
     );
+
+    setStatus("ローカル保存しました");
 }
 
 function loadLocal() {
-    const code = localStorage.getItem(
+    const savedCode = localStorage.getItem(
         "japanese-language-code"
     );
 
-    const fileName = localStorage.getItem(
-        "japanese-language-file"
+    const savedFileName = localStorage.getItem(
+        "japanese-language-file-name"
     );
 
-    if (code !== null) {
-        editor.value = code;
+    if (savedCode !== null) {
+        editor.value = savedCode;
     }
 
-    if (fileName) {
-        currentFileName = fileName;
+    if (savedFileName !== null) {
+        currentFileName = savedFileName;
     }
 }
 
 function clearEditor() {
     editor.value = "";
     output.textContent = "";
+
+    currentFileName = "program.jp";
+
     setStatus("クリアしました");
-    saveLocal();
 }
 
 function openFile() {
@@ -113,20 +84,36 @@ function openFile() {
     input.type = "file";
     input.accept = ".jp,text/plain";
 
-    input.addEventListener("change", async () => {
-        const file = input.files[0];
+    input.addEventListener("change", () => {
+        const file = input.files?.[0];
 
         if (!file) {
             return;
         }
 
-        editor.value = await file.text();
-        currentFileName = file.name;
+        const reader = new FileReader();
 
-        saveLocal();
+        reader.onload = () => {
+            editor.value = String(
+                reader.result ?? ""
+            );
 
-        setStatus(
-            `${file.name} を開きました`
+            currentFileName = file.name;
+
+            saveLocal();
+
+            setStatus(
+                `${file.name} を開きました`
+            );
+        };
+
+        reader.onerror = () => {
+            setStatus("ファイルを読み込めませんでした");
+        };
+
+        reader.readAsText(
+            file,
+            "UTF-8"
         );
     });
 
@@ -143,21 +130,23 @@ function saveFile() {
 
     const url = URL.createObjectURL(blob);
 
-    const a = document.createElement("a");
+    const link = document.createElement("a");
 
-    a.href = url;
-    a.download = currentFileName.endsWith(".jp")
-        ? currentFileName
-        : `${currentFileName}.jp`;
+    link.href = url;
+    link.download = currentFileName;
 
-    a.click();
+    document.body.appendChild(link);
+
+    link.click();
+
+    link.remove();
 
     URL.revokeObjectURL(url);
 
     saveLocal();
 
     setStatus(
-        `${a.download} を保存しました`
+        `${currentFileName} を保存しました`
     );
 }
 
@@ -167,91 +156,133 @@ function saveAsFile() {
         currentFileName
     );
 
-    if (!name) {
+    if (name === null) {
         return;
     }
 
-    currentFileName =
-        name.endsWith(".jp")
-            ? name
-            : `${name}.jp`;
+    let fileName = name.trim();
+
+    if (!fileName) {
+        fileName = "program";
+    }
+
+    if (!fileName.toLowerCase().endsWith(".jp")) {
+        fileName += ".jp";
+    }
+
+    currentFileName = fileName;
 
     saveFile();
 }
 
-document
-    .getElementById("runButton")
-    ?.addEventListener(
-        "click",
-        runProgram
-    );
+function setupButtons() {
+    const openButton =
+        document.getElementById("openButton");
 
-document
-    .getElementById("clearButton")
-    ?.addEventListener(
-        "click",
-        clearEditor
-    );
+    const saveButton =
+        document.getElementById("saveButton");
 
-document
-    .getElementById("openButton")
-    ?.addEventListener(
-        "click",
-        openFile
-    );
+    const saveAsButton =
+        document.getElementById("saveAsButton");
 
-document
-    .getElementById("saveButton")
-    ?.addEventListener(
-        "click",
-        saveFile
-    );
+    const runButton =
+        document.getElementById("runButton");
 
-document
-    .getElementById("saveAsButton")
-    ?.addEventListener(
-        "click",
-        saveAsFile
-    );
+    const clearButton =
+        document.getElementById("clearButton");
 
-editor?.addEventListener(
-    "input",
-    saveLocal
-);
-
-editor?.addEventListener(
-    "keydown",
-    event => {
-        if (
-            event.ctrlKey &&
-            event.key === "Enter"
-        ) {
-            event.preventDefault();
-            runProgram();
-        }
-
-        if (event.key === "Tab") {
-            event.preventDefault();
-
-            const start =
-                editor.selectionStart;
-
-            const end =
-                editor.selectionEnd;
-
-            editor.setRangeText(
-                "    ",
-                start,
-                end,
-                "end"
-            );
-
-            saveLocal();
-        }
+    if (openButton) {
+        openButton.addEventListener(
+            "click",
+            openFile
+        );
     }
-);
+
+    if (saveButton) {
+        saveButton.addEventListener(
+            "click",
+            saveFile
+        );
+    }
+
+    if (saveAsButton) {
+        saveAsButton.addEventListener(
+            "click",
+            saveAsFile
+        );
+    }
+
+    if (runButton) {
+        runButton.addEventListener(
+            "click",
+            runProgram
+        );
+    }
+
+    if (clearButton) {
+        clearButton.addEventListener(
+            "click",
+            clearEditor
+        );
+    }
+}
+
+function setupEditor() {
+    if (!editor) {
+        return;
+    }
+
+    editor.addEventListener(
+        "keydown",
+        (event) => {
+            if (
+                event.ctrlKey &&
+                event.key === "Enter"
+            ) {
+                event.preventDefault();
+
+                runProgram();
+
+                return;
+            }
+
+            if (event.key === "Tab") {
+                event.preventDefault();
+
+                const start =
+                    editor.selectionStart;
+
+                const end =
+                    editor.selectionEnd;
+
+                const value =
+                    editor.value;
+
+                editor.value =
+                    value.substring(
+                        0,
+                        start
+                    ) +
+                    "    " +
+                    value.substring(
+                        end
+                    );
+
+                editor.selectionStart =
+                    start + 4;
+
+                editor.selectionEnd =
+                    start + 4;
+            }
+        }
+    );
+}
 
 loadLocal();
+
+setupButtons();
+
+setupEditor();
 
 setStatus(
     "Japanese Language Web v2.1.0"

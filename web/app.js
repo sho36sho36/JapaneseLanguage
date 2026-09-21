@@ -1233,34 +1233,7 @@
       );
       setStatus("\u5B9F\u884C\u5B8C\u4E86");
     } catch (error) {
-      const lines = [];
-      lines.push("\u5B9F\u884C\u4E2D\u306B\u30A8\u30E9\u30FC\u304C\u767A\u751F\u3057\u307E\u3057\u305F\u3002");
-      if (error?.lineNumber !== void 0) {
-        lines.push(
-          `\u884C\u756A\u53F7: ${error.lineNumber}`
-        );
-      }
-      if (error?.message) {
-        lines.push(
-          `\u30A8\u30E9\u30FC: ${error.message}`
-        );
-      }
-      if (error?.cause) {
-        lines.push(
-          `\u539F\u56E0: ${error.cause}`
-        );
-      }
-      if (error?.line) {
-        lines.push(
-          `\u30B3\u30FC\u30C9: ${error.line}`
-        );
-      }
-      if (lines.length === 1) {
-        lines.push(
-          `\u30A8\u30E9\u30FC: ${String(error)}`
-        );
-      }
-      output.textContent = lines.join("\n");
+      output.textContent = error?.message || String(error);
       setStatus("\u5B9F\u884C\u30A8\u30E9\u30FC");
     }
   }
@@ -1270,44 +1243,57 @@
       editor.value
     );
     localStorage.setItem(
-      "japanese-language-file",
+      "japanese-language-file-name",
       currentFileName
     );
+    setStatus("\u30ED\u30FC\u30AB\u30EB\u4FDD\u5B58\u3057\u307E\u3057\u305F");
   }
   function loadLocal() {
-    const code = localStorage.getItem(
+    const savedCode = localStorage.getItem(
       "japanese-language-code"
     );
-    const fileName = localStorage.getItem(
-      "japanese-language-file"
+    const savedFileName = localStorage.getItem(
+      "japanese-language-file-name"
     );
-    if (code !== null) {
-      editor.value = code;
+    if (savedCode !== null) {
+      editor.value = savedCode;
     }
-    if (fileName) {
-      currentFileName = fileName;
+    if (savedFileName !== null) {
+      currentFileName = savedFileName;
     }
   }
   function clearEditor() {
     editor.value = "";
     output.textContent = "";
+    currentFileName = "program.jp";
     setStatus("\u30AF\u30EA\u30A2\u3057\u307E\u3057\u305F");
-    saveLocal();
   }
   function openFile() {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".jp,text/plain";
-    input.addEventListener("change", async () => {
-      const file = input.files[0];
+    input.addEventListener("change", () => {
+      const file = input.files?.[0];
       if (!file) {
         return;
       }
-      editor.value = await file.text();
-      currentFileName = file.name;
-      saveLocal();
-      setStatus(
-        `${file.name} \u3092\u958B\u304D\u307E\u3057\u305F`
+      const reader = new FileReader();
+      reader.onload = () => {
+        editor.value = String(
+          reader.result ?? ""
+        );
+        currentFileName = file.name;
+        saveLocal();
+        setStatus(
+          `${file.name} \u3092\u958B\u304D\u307E\u3057\u305F`
+        );
+      };
+      reader.onerror = () => {
+        setStatus("\u30D5\u30A1\u30A4\u30EB\u3092\u8AAD\u307F\u8FBC\u3081\u307E\u305B\u3093\u3067\u3057\u305F");
+      };
+      reader.readAsText(
+        file,
+        "UTF-8"
       );
     });
     input.click();
@@ -1320,14 +1306,16 @@
       }
     );
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = currentFileName.endsWith(".jp") ? currentFileName : `${currentFileName}.jp`;
-    a.click();
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = currentFileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
     URL.revokeObjectURL(url);
     saveLocal();
     setStatus(
-      `${a.download} \u3092\u4FDD\u5B58\u3057\u307E\u3057\u305F`
+      `${currentFileName} \u3092\u4FDD\u5B58\u3057\u307E\u3057\u305F`
     );
   }
   function saveAsFile() {
@@ -1335,58 +1323,88 @@
       "\u30D5\u30A1\u30A4\u30EB\u540D\u3092\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044",
       currentFileName
     );
-    if (!name) {
+    if (name === null) {
       return;
     }
-    currentFileName = name.endsWith(".jp") ? name : `${name}.jp`;
+    let fileName = name.trim();
+    if (!fileName) {
+      fileName = "program";
+    }
+    if (!fileName.toLowerCase().endsWith(".jp")) {
+      fileName += ".jp";
+    }
+    currentFileName = fileName;
     saveFile();
   }
-  document.getElementById("runButton")?.addEventListener(
-    "click",
-    runProgram
-  );
-  document.getElementById("clearButton")?.addEventListener(
-    "click",
-    clearEditor
-  );
-  document.getElementById("openButton")?.addEventListener(
-    "click",
-    openFile
-  );
-  document.getElementById("saveButton")?.addEventListener(
-    "click",
-    saveFile
-  );
-  document.getElementById("saveAsButton")?.addEventListener(
-    "click",
-    saveAsFile
-  );
-  editor?.addEventListener(
-    "input",
-    saveLocal
-  );
-  editor?.addEventListener(
-    "keydown",
-    (event) => {
-      if (event.ctrlKey && event.key === "Enter") {
-        event.preventDefault();
-        runProgram();
-      }
-      if (event.key === "Tab") {
-        event.preventDefault();
-        const start = editor.selectionStart;
-        const end = editor.selectionEnd;
-        editor.setRangeText(
-          "    ",
-          start,
-          end,
-          "end"
-        );
-        saveLocal();
-      }
+  function setupButtons() {
+    const openButton = document.getElementById("openButton");
+    const saveButton = document.getElementById("saveButton");
+    const saveAsButton = document.getElementById("saveAsButton");
+    const runButton = document.getElementById("runButton");
+    const clearButton = document.getElementById("clearButton");
+    if (openButton) {
+      openButton.addEventListener(
+        "click",
+        openFile
+      );
     }
-  );
+    if (saveButton) {
+      saveButton.addEventListener(
+        "click",
+        saveFile
+      );
+    }
+    if (saveAsButton) {
+      saveAsButton.addEventListener(
+        "click",
+        saveAsFile
+      );
+    }
+    if (runButton) {
+      runButton.addEventListener(
+        "click",
+        runProgram
+      );
+    }
+    if (clearButton) {
+      clearButton.addEventListener(
+        "click",
+        clearEditor
+      );
+    }
+  }
+  function setupEditor() {
+    if (!editor) {
+      return;
+    }
+    editor.addEventListener(
+      "keydown",
+      (event) => {
+        if (event.ctrlKey && event.key === "Enter") {
+          event.preventDefault();
+          runProgram();
+          return;
+        }
+        if (event.key === "Tab") {
+          event.preventDefault();
+          const start = editor.selectionStart;
+          const end = editor.selectionEnd;
+          const value = editor.value;
+          editor.value = value.substring(
+            0,
+            start
+          ) + "    " + value.substring(
+            end
+          );
+          editor.selectionStart = start + 4;
+          editor.selectionEnd = start + 4;
+        }
+      }
+    );
+  }
   loadLocal();
+  setupButtons();
+  setupEditor();
   setStatus(
     "Japanese Language Web v2.1.0"
   );
