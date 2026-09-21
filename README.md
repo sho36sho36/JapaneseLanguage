@@ -8,7 +8,7 @@
 
 **v2.0.0**
 
-Japanese Language v2.0.0では、PC版に加えてWeb版にも対応しています。
+Japanese Language v2.0.0では、PC版に加えてWeb版にも対応しています。また、URL版も公開しました。
 
 ### PC版
 
@@ -37,6 +37,14 @@ JavaScriptエンジン
       ↓
 ブラウザ上で実行
 ```
+
+### URL版
+
+以下を開くことによって、ネットがあればどこでもできます。
+```text
+https://sho36sho36.github.io/JapaneseLanguage/?utm_source=chatgpt.com
+```
+
 
 PC版とWeb版で、同じ日本語プログラミング言語の構文を使用することを目指しています。
 
