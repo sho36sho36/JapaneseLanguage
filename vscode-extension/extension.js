@@ -2,10 +2,17 @@ const vscode = require("vscode");
 
 /*
  * Japanese Language
- * 入力補完機能 v2.2.0
+ * 入力補完機能 v2.2.1
+ *
+ * 追加機能:
+ * 数値・文字列・判定・変換などを補完候補に対応
  */
 
 const commands = [
+    // ==============================
+    // 基本
+    // ==============================
+
     {
         label: "表示する",
         readings: ["ひょうじ", "ひょう", "表示"],
@@ -40,6 +47,10 @@ const commands = [
         detail: "指定した秒数だけ待機します",
         snippet: "待つ ${1:秒数}"
     },
+
+    // ==============================
+    // 制御構文
+    // ==============================
 
     {
         label: "もし",
@@ -89,6 +100,10 @@ const commands = [
         snippet: "抜ける"
     },
 
+    // ==============================
+    // 数値操作
+    // ==============================
+
     {
         label: "増やす",
         readings: ["ふやす", "ふや", "増やす"],
@@ -125,11 +140,229 @@ const commands = [
     },
 
     {
-        label: "数字にする",
-        readings: ["すうじにする", "すうじ", "数字"],
-        detail: "値を数字に変換します",
-        snippet: "数字にする「${1:文字列}」"
+        label: "最大",
+        readings: ["さいだい", "最大"],
+        detail: "最大値を求めます",
+        snippet: "最大 ${1:10}, ${2:20}, ${3:30}"
     },
+
+    {
+        label: "最小",
+        readings: ["さいしょう", "最小"],
+        detail: "最小値を求めます",
+        snippet: "最小 ${1:10}, ${2:20}, ${3:30}"
+    },
+
+    {
+        label: "絶対値",
+        readings: ["ぜったいち", "ぜったい", "絶対値"],
+        detail: "絶対値を求めます",
+        snippet: "絶対値 ${1:-100}"
+    },
+
+    {
+        label: "四捨五入",
+        readings: ["ししゃごにゅう", "ししゃ", "四捨五入"],
+        detail: "数値を四捨五入します",
+        snippet: "四捨五入 ${1:3.14}"
+    },
+
+    {
+        label: "平均",
+        readings: ["へいきん", "平均"],
+        detail: "数値の平均を求めます",
+        snippet: "平均 ${1:10}, ${2:20}, ${3:30}"
+    },
+
+    {
+        label: "合計",
+        readings: ["ごうけい", "合計"],
+        detail: "数値の合計を求めます",
+        snippet: "合計 ${1:10}, ${2:20}, ${3:30}"
+    },
+
+    {
+        label: "範囲",
+        readings: ["はんい", "範囲"],
+        detail: "数値の範囲を求めます",
+        snippet: "範囲 ${1:10}, ${2:20}, ${3:30}"
+    },
+
+    {
+        label: "平方根",
+        readings: ["へいほうこん", "平方根"],
+        detail: "平方根を求めます",
+        snippet: "平方根 ${1:16}"
+    },
+
+    {
+        label: "べき乗",
+        readings: ["べきじょう", "べき", "べき乗"],
+        detail: "べき乗を計算します",
+        snippet: "べき乗 ${1:2} ${2:3}"
+    },
+
+    {
+        label: "切り捨て",
+        readings: ["きりすて", "切り捨て"],
+        detail: "小数部分を切り捨てます",
+        snippet: "切り捨て ${1:3.14}"
+    },
+
+    {
+        label: "切り上げ",
+        readings: ["きりあげ", "切り上げ"],
+        detail: "小数部分を切り上げます",
+        snippet: "切り上げ ${1:3.14}"
+    },
+
+    {
+        label: "乱数",
+        readings: ["らんすう", "乱数"],
+        detail: "指定範囲の乱数を生成します",
+        snippet: "乱数 ${1:1} ${2:100}"
+    },
+
+    {
+        label: "最大公約数",
+        readings: ["さいだいこうやくすう", "最大公約数"],
+        detail: "最大公約数を求めます",
+        snippet: "最大公約数 ${1:12} ${2:18}"
+    },
+
+    {
+        label: "最小公倍数",
+        readings: ["さいしょうこうばいすう", "最小公倍数"],
+        detail: "最小公倍数を求めます",
+        snippet: "最小公倍数 ${1:4} ${2:6}"
+    },
+
+    {
+        label: "素数か",
+        readings: ["そすうか", "素数"],
+        detail: "数値が素数か判定します",
+        snippet: "素数か ${1:17}"
+    },
+
+    {
+        label: "階乗",
+        readings: ["かいじょう", "階乗"],
+        detail: "階乗を求めます",
+        snippet: "階乗 ${1:5}"
+    },
+
+    {
+        label: "符号",
+        readings: ["ふごう", "符号"],
+        detail: "数値の符号を取得します",
+        snippet: "符号 ${1:-10}"
+    },
+
+    {
+        label: "数値を反転",
+        readings: ["すうちをはんてん", "数値を反転"],
+        detail: "数値の符号を反転します",
+        snippet: "数値を反転 ${1:10}"
+    },
+
+    {
+        label: "数値を2進数にする",
+        readings: ["すうちをにしんすうにする", "2進数"],
+        detail: "数値を2進数に変換します",
+        snippet: "数値を2進数にする ${1:10}"
+    },
+
+    {
+        label: "数値を16進数にする",
+        readings: ["すうちをじゅうろくしんすうにする", "16進数"],
+        detail: "数値を16進数に変換します",
+        snippet: "数値を16進数にする ${1:255}"
+    },
+
+    {
+        label: "2進数を数字にする",
+        readings: ["にしんすうをすうじにする", "2進数を数字にする"],
+        detail: "2進数を数字に変換します",
+        snippet: "2進数を数字にする「${1:1010}」"
+    },
+
+    {
+        label: "16進数を数字にする",
+        readings: ["じゅうろくしんすうをすうじにする", "16進数を数字にする"],
+        detail: "16進数を数字に変換します",
+        snippet: "16進数を数字にする「${1:FF}」"
+    },
+
+    {
+        label: "数値の範囲内か",
+        readings: ["すうちのはんいないか", "範囲内"],
+        detail: "数値が指定範囲内か判定します",
+        snippet: "数値の範囲内か ${1:10} ${2:1} ${3:20}"
+    },
+
+    {
+        label: "正負を反転",
+        readings: ["せいふをはんてん", "正負を反転"],
+        detail: "数値の正負を反転します",
+        snippet: "正負を反転 ${1:10}"
+    },
+
+    {
+        label: "小数部分",
+        readings: ["しょうすうぶぶん", "小数部分"],
+        detail: "数値の小数部分を取得します",
+        snippet: "小数部分 ${1:3.14}"
+    },
+
+    {
+        label: "整数部分",
+        readings: ["せいすうぶぶん", "整数部分"],
+        detail: "数値の整数部分を取得します",
+        snippet: "整数部分 ${1:3.14}"
+    },
+
+    // ==============================
+    // 数値判定
+    // ==============================
+
+    {
+        label: "偶数か",
+        readings: ["ぐうすうか", "偶数"],
+        detail: "数値が偶数か判定します",
+        snippet: "偶数か ${1:10}"
+    },
+
+    {
+        label: "奇数か",
+        readings: ["きすうか", "奇数"],
+        detail: "数値が奇数か判定します",
+        snippet: "奇数か ${1:11}"
+    },
+
+    {
+        label: "正数か",
+        readings: ["せいすうか", "正数"],
+        detail: "数値が正数か判定します",
+        snippet: "正数か ${1:10}"
+    },
+
+    {
+        label: "負数か",
+        readings: ["ふすうか", "負数"],
+        detail: "数値が負数か判定します",
+        snippet: "負数か ${1:-10}"
+    },
+
+    {
+        label: "0か",
+        readings: ["ぜろか", "0か"],
+        detail: "値が0か判定します",
+        snippet: "0か ${1:0}"
+    },
+
+    // ==============================
+    // 文字列
+    // ==============================
 
     {
         label: "文字にする",
@@ -139,25 +372,125 @@ const commands = [
     },
 
     {
-        label: "文字をつなぐ",
-        readings: ["もじをつなぐ", "もじを", "つなぐ"],
-        detail: "2つの文字列をつなぎます",
-        snippet: "文字をつなぐ「${1:文字列1}」「${2:文字列2}」"
+        label: "文字列の長さ",
+        readings: ["もじれつのながさ", "文字列の長さ"],
+        detail: "文字列の長さを取得します",
+        snippet: "文字列の長さ「${1:文字列}」"
     },
 
     {
-        label: "大文字にする",
-        readings: ["おおもじにする", "おおもじ", "大文字"],
-        detail: "文字列を大文字にします",
-        snippet: "大文字にする「${1:文字列}」"
+        label: "文字を探す",
+        readings: ["もじをさがす", "文字を探す"],
+        detail: "文字列から文字を探します",
+        snippet: "文字を探す「${1:文字列}」「${2:検索文字}」"
     },
 
     {
-        label: "小文字にする",
-        readings: ["こもじにする", "こもじ", "小文字"],
-        detail: "文字列を小文字にします",
-        snippet: "小文字にする「${1:文字列}」"
+        label: "文字を置き換える",
+        readings: ["もじをおきかえる", "文字を置き換える"],
+        detail: "文字列の一部を置き換えます",
+        snippet:
+            "文字を置き換える「${1:文字列}」「${2:検索文字}」「${3:置換文字}」"
     },
+
+    {
+        label: "文字を切り出す",
+        readings: ["もじをきりだす", "文字を切り出す"],
+        detail: "文字列の一部を切り出します",
+        snippet: "文字を切り出す「${1:文字列}」 ${2:0} ${3:3}"
+    },
+
+    {
+        label: "空白を消す",
+        readings: ["くうはくをけす", "空白を消す"],
+        detail: "文字列の前後の空白を削除します",
+        snippet: "空白を消す「${1: 文字列 }」"
+    },
+
+    {
+        label: "文字が含まれる",
+        readings: ["もじがふくまれる", "含まれる"],
+        detail: "文字列に指定文字が含まれるか判定します",
+        snippet: "文字が含まれる「${1:文字列}」「${2:検索文字}」"
+    },
+
+    {
+        label: "文字を反転",
+        readings: ["もじをはんてん", "文字を反転"],
+        detail: "文字列を反転します",
+        snippet: "文字を反転「${1:こんにちは}」"
+    },
+
+    {
+        label: "文字の先頭",
+        readings: ["もじのせんとう", "文字の先頭"],
+        detail: "文字列の先頭の文字を取得します",
+        snippet: "文字の先頭「${1:こんにちは}」"
+    },
+
+    {
+        label: "文字の末尾",
+        readings: ["もじのまつび", "文字の末尾"],
+        detail: "文字列の末尾の文字を取得します",
+        snippet: "文字の末尾「${1:こんにちは}」"
+    },
+
+    {
+        label: "文字が数字か",
+        readings: ["もじがすうじか", "文字が数字か"],
+        detail: "文字列が数字か判定します",
+        snippet: "文字が数字か「${1:123}」"
+    },
+
+    {
+        label: "文字が空か",
+        readings: ["もじがからか", "文字が空か"],
+        detail: "文字列が空か判定します",
+        snippet: "文字が空か「${1:}」"
+    },
+
+    // ==============================
+    // 型変換
+    // ==============================
+
+    {
+        label: "数字にする",
+        readings: ["すうじにする", "すうじ", "数字"],
+        detail: "値を数字に変換します",
+        snippet: "数字にする「${1:123}」"
+    },
+
+    {
+        label: "数値を2進数にする",
+        readings: ["すうちをにしんすうにする", "2進数"],
+        detail: "数値を2進数に変換します",
+        snippet: "数値を2進数にする ${1:10}"
+    },
+
+    {
+        label: "数値を16進数にする",
+        readings: ["すうちをじゅうろくしんすうにする", "16進数"],
+        detail: "数値を16進数に変換します",
+        snippet: "数値を16進数にする ${1:255}"
+    },
+
+    {
+        label: "2進数を数字にする",
+        readings: ["にしんすうをすうじにする", "2進数を数字にする"],
+        detail: "2進数を数字に変換します",
+        snippet: "2進数を数字にする「${1:1010}」"
+    },
+
+    {
+        label: "16進数を数字にする",
+        readings: ["じゅうろくしんすうをすうじにする", "16進数を数字にする"],
+        detail: "16進数を数字に変換します",
+        snippet: "16進数を数字にする「${1:FF}」"
+    },
+
+    // ==============================
+    // リスト
+    // ==============================
 
     {
         label: "リスト「名前」を作る",
@@ -198,33 +531,9 @@ const commands = [
             "リスト「${1:名前}」の長さ"
     },
 
-    {
-        label: "最大",
-        readings: ["さいだい", "最大"],
-        detail: "最大値を求めます",
-        snippet: "最大 ${1:10}, ${2:20}, ${3:30}"
-    },
-
-    {
-        label: "最小",
-        readings: ["さいしょう", "最小"],
-        detail: "最小値を求めます",
-        snippet: "最小 ${1:10}, ${2:20}, ${3:30}"
-    },
-
-    {
-        label: "絶対値",
-        readings: ["ぜったいち", "ぜったい", "絶対値"],
-        detail: "絶対値を求めます",
-        snippet: "絶対値 ${1:-100}"
-    },
-
-    {
-        label: "四捨五入",
-        readings: ["ししゃごにゅう", "ししゃ", "四捨五入"],
-        detail: "数値を四捨五入します",
-        snippet: "四捨五入 ${1:3.14}"
-    },
+    // ==============================
+    // その他
+    // ==============================
 
     {
         label: "存在する",
@@ -239,12 +548,17 @@ const commands = [
  * 入力文字から現在の単語を取得
  */
 function getCurrentWord(document, position) {
-    const line = document.lineAt(position.line).text;
 
-    let start = position.character;
+    const line =
+        document.lineAt(position.line).text;
+
+    let start =
+        position.character;
 
     while (start > 0) {
-        const char = line[start - 1];
+
+        const char =
+            line[start - 1];
 
         if (
             char === " " ||
@@ -258,132 +572,41 @@ function getCurrentWord(document, position) {
     }
 
     return {
-        text: line.substring(start, position.character),
+        text: line.substring(
+            start,
+            position.character
+        ),
         start
     };
 }
 
 
 /*
- * ひらがな・カタカナ・漢字を比較しやすくする
+ * ひらがな・カタカナを比較しやすくする
  */
 function normalize(text) {
+
     return text
         .trim()
         .toLowerCase()
-        .replace(/[ぁ-ん]/g, char =>
-            String.fromCharCode(char.charCodeAt(0) + 0x60)
+        .replace(
+            /[ぁ-ん]/g,
+            char =>
+                String.fromCharCode(
+                    char.charCodeAt(0) + 0x60
+                )
         );
 }
 
 
 /*
- * 補完候補を登録
- */
-function activate(context) {
-
-    const provider =
-        vscode.languages.registerCompletionItemProvider(
-            "japanese",
-
-            {
-                provideCompletionItems(document, position) {
-
-                    const current =
-                        getCurrentWord(document, position);
-
-                    const input =
-                        normalize(current.text);
-
-                    /*
-                     * 何も入力していない場合も
-                     * コマンド一覧を表示
-                     */
-                    if (!input) {
-                        return commands.map(command =>
-                            createCompletionItem(
-                                command,
-                                current.start,
-                                position.character
-                            )
-                        );
-                    }
-
-                    const results = [];
-
-                    for (const command of commands) {
-
-                        const label =
-                            normalize(command.label);
-
-                        const readings =
-                            command.readings.map(normalize);
-
-                        let matched = false;
-
-                        /*
-                         * コマンド本体
-                         */
-                        if (label.startsWith(input)) {
-                            matched = true;
-                        }
-
-                        /*
-                         * 読み仮名
-                         */
-                        if (
-                            !matched &&
-                            readings.some(reading =>
-                                reading.startsWith(input)
-                            )
-                        ) {
-                            matched = true;
-                        }
-
-                        /*
-                         * 入力文字がコマンド内に
-                         * 含まれている場合
-                         */
-                        if (
-                            !matched &&
-                            label.includes(input)
-                        ) {
-                            matched = true;
-                        }
-
-                        if (matched) {
-                            results.push(
-                                createCompletionItem(
-                                    command,
-                                    current.start,
-                                    position.character
-                                )
-                            );
-                        }
-                    }
-
-                    return results;
-                }
-            },
-
-            /*
-             * 日本語入力中でも呼び出す
-             */
-            " ",
-            "　"
-        );
-
-    context.subscriptions.push(provider);
-}
-
-
-/*
- * CompletionItemを作成
+ * 補完候補を作成
  */
 function createCompletionItem(
     command,
-    start,
-    end
+    document,
+    position,
+    start
 ) {
 
     const item =
@@ -408,42 +631,146 @@ function createCompletionItem(
     item.range =
         new vscode.Range(
             new vscode.Position(
-                0,
-                0
-            ),
-            new vscode.Position(
-                0,
-                0
-            )
-        );
-
-    /*
-     * 現在入力中の文字を置き換える
-     */
-    item.range =
-        new vscode.Range(
-            new vscode.Position(
-                item.range.start.line,
+                position.line,
                 start
             ),
-            new vscode.Position(
-                item.range.end.line,
-                end
-            )
+            position
         );
 
-    /*
-     * 日本語入力中でも候補として扱いやすくする
-     */
     item.filterText =
-        command.label + " " +
+        command.label +
+        " " +
         command.readings.join(" ");
 
     return item;
 }
 
 
+/*
+ * 拡張機能を有効化
+ */
+function activate(context) {
+
+    const provider =
+        vscode.languages.registerCompletionItemProvider(
+            "japanese",
+
+            {
+
+                provideCompletionItems(
+                    document,
+                    position
+                ) {
+
+                    const current =
+                        getCurrentWord(
+                            document,
+                            position
+                        );
+
+                    const input =
+                        normalize(
+                            current.text
+                        );
+
+                    /*
+                     * 入力がない場合は
+                     * 全候補を表示
+                     */
+                    if (!input) {
+
+                        return commands.map(
+                            command =>
+                                createCompletionItem(
+                                    command,
+                                    document,
+                                    position,
+                                    current.start
+                                )
+                        );
+                    }
+
+                    const results = [];
+
+                    for (
+                        const command
+                        of commands
+                    ) {
+
+                        const label =
+                            normalize(
+                                command.label
+                            );
+
+                        const readings =
+                            command.readings
+                                .map(normalize);
+
+                        let matched = false;
+
+                        /*
+                         * コマンド名
+                         */
+                        if (
+                            label.startsWith(input)
+                        ) {
+                            matched = true;
+                        }
+
+                        /*
+                         * 読み仮名
+                         */
+                        if (
+                            !matched &&
+                            readings.some(
+                                reading =>
+                                    reading.startsWith(
+                                        input
+                                    )
+                            )
+                        ) {
+                            matched = true;
+                        }
+
+                        /*
+                         * コマンド名の途中
+                         */
+                        if (
+                            !matched &&
+                            label.includes(input)
+                        ) {
+                            matched = true;
+                        }
+
+                        if (matched) {
+
+                            results.push(
+                                createCompletionItem(
+                                    command,
+                                    document,
+                                    position,
+                                    current.start
+                                )
+                            );
+                        }
+                    }
+
+                    return results;
+                }
+            },
+
+            " ",
+            "　"
+        );
+
+    context.subscriptions.push(
+        provider
+    );
+}
+
+
 function deactivate() {}
+
 
 module.exports = {
     activate,
