@@ -4,3 +4,8 @@
 .venv/
 venv/
 .vscode/
+
+node_modules/
+*.backup
+*.bak
+*.old

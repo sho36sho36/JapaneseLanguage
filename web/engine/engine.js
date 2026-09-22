@@ -7,21 +7,71 @@ import { VariablePlugin } from "../plugins/variable.js";
 import { InputPlugin } from "../plugins/input.js";
 import { CalculatePlugin } from "../plugins/calculate.js";
 import { WaitPlugin } from "../plugins/wait.js";
+
 import { IncreasePlugin } from "../plugins/increase.js";
 import { DecreasePlugin } from "../plugins/decrease.js";
 import { MultiplyPlugin } from "../plugins/multiply.js";
 import { DividePlugin } from "../plugins/divide.js";
 import { RemainderPlugin } from "../plugins/remainder.js";
+
 import { ToNumberPlugin } from "../plugins/to_number.js";
 import { ToStringPlugin } from "../plugins/to_string.js";
 import { ConcatPlugin } from "../plugins/concat.js";
 import { UpperPlugin } from "../plugins/upper.js";
 import { LowerPlugin } from "../plugins/lower.js";
+
 import { MaximumPlugin } from "../plugins/maximum.js";
 import { MinimumPlugin } from "../plugins/minimum.js";
 import { AbsolutePlugin } from "../plugins/absolute.js";
 import { RoundNumberPlugin } from "../plugins/round_number.js";
 import { ExistsPlugin } from "../plugins/exists.js";
+
+import { AveragePlugin } from "../plugins/average.js";
+import { SumPlugin } from "../plugins/sum.js";
+import { RangePlugin } from "../plugins/range.js";
+
+import { EvenPlugin } from "../plugins/even.js";
+import { OddPlugin } from "../plugins/odd.js";
+import { PositivePlugin } from "../plugins/positive.js";
+import { NegativePlugin } from "../plugins/negative.js";
+import { ZeroPlugin } from "../plugins/zero.js";
+
+import { StringLengthPlugin } from "../plugins/string_length.js";
+import { StringFindPlugin } from "../plugins/string_find.js";
+import { StringReplacePlugin } from "../plugins/string_replace.js";
+import { StringSlicePlugin } from "../plugins/string_slice.js";
+import { StripPlugin } from "../plugins/strip.js";
+import { ContainsPlugin } from "../plugins/contains.js";
+
+import { SqrtPlugin } from "../plugins/sqrt.js";
+import { PowerPlugin } from "../plugins/power.js";
+import { FloorPlugin } from "../plugins/floor.js";
+import { CeilPlugin } from "../plugins/ceil.js";
+import { RandomPlugin } from "../plugins/random.js";
+
+import { GcdPlugin } from "../plugins/gcd.js";
+import { LcmPlugin } from "../plugins/lcm.js";
+import { PrimePlugin } from "../plugins/prime.js";
+import { FactorialPlugin } from "../plugins/factorial.js";
+import { SignPlugin } from "../plugins/sign.js";
+import { NegatePlugin } from "../plugins/negate.js";
+
+import { BinaryPlugin } from "../plugins/binary.js";
+import { HexPlugin } from "../plugins/hex.js";
+import { BinaryToNumberPlugin } from "../plugins/binary_to_number.js";
+import { HexToNumberPlugin } from "../plugins/hex_to_number.js";
+
+import { InRangePlugin } from "../plugins/in_range.js";
+import { ReverseNumberPlugin } from "../plugins/reverse_number.js";
+import { DecimalPartPlugin } from "../plugins/decimal_part.js";
+import { IntegerPartPlugin } from "../plugins/integer_part.js";
+
+import { ReverseStringPlugin } from "../plugins/reverse_string.js";
+import { FirstCharPlugin } from "../plugins/first_char.js";
+import { LastCharPlugin } from "../plugins/last_char.js";
+import { IsNumberPlugin } from "../plugins/is_number.js";
+import { IsEmptyPlugin } from "../plugins/is_empty.js";
+
 import { ListPlugin } from "../plugins/list.js";
 
 
@@ -58,7 +108,7 @@ export class WebEngine {
 
     constructor(output = null) {
 
-        this.version = "2.1.0";
+        this.version = "2.1.1";
 
         this.runtime = new Runtime(output);
         this.parser = new JapaneseParser();
@@ -70,12 +120,14 @@ export class WebEngine {
 
     registerPlugins() {
 
+        // 基本
         this.plugins.register(new DisplayPlugin());
         this.plugins.register(new VariablePlugin());
         this.plugins.register(new InputPlugin());
         this.plugins.register(new CalculatePlugin());
         this.plugins.register(new WaitPlugin());
 
+        // 数値・計算
         this.plugins.register(new IncreasePlugin());
         this.plugins.register(new DecreasePlugin());
         this.plugins.register(new MultiplyPlugin());
@@ -94,6 +146,61 @@ export class WebEngine {
         this.plugins.register(new RoundNumberPlugin());
         this.plugins.register(new ExistsPlugin());
 
+        // 集計
+        this.plugins.register(new AveragePlugin());
+        this.plugins.register(new SumPlugin());
+        this.plugins.register(new RangePlugin());
+
+        // 数値判定
+        this.plugins.register(new EvenPlugin());
+        this.plugins.register(new OddPlugin());
+        this.plugins.register(new PositivePlugin());
+        this.plugins.register(new NegativePlugin());
+        this.plugins.register(new ZeroPlugin());
+
+        // 文字列
+        this.plugins.register(new StringLengthPlugin());
+        this.plugins.register(new StringFindPlugin());
+        this.plugins.register(new StringReplacePlugin());
+        this.plugins.register(new StringSlicePlugin());
+        this.plugins.register(new StripPlugin());
+        this.plugins.register(new ContainsPlugin());
+
+        // 数学
+        this.plugins.register(new SqrtPlugin());
+        this.plugins.register(new PowerPlugin());
+        this.plugins.register(new FloorPlugin());
+        this.plugins.register(new CeilPlugin());
+        this.plugins.register(new RandomPlugin());
+
+        // 数学・整数
+        this.plugins.register(new GcdPlugin());
+        this.plugins.register(new LcmPlugin());
+        this.plugins.register(new PrimePlugin());
+        this.plugins.register(new FactorialPlugin());
+        this.plugins.register(new SignPlugin());
+        this.plugins.register(new NegatePlugin());
+
+        // 基数変換
+        this.plugins.register(new BinaryPlugin());
+        this.plugins.register(new HexPlugin());
+        this.plugins.register(new BinaryToNumberPlugin());
+        this.plugins.register(new HexToNumberPlugin());
+
+        // 数値操作
+        this.plugins.register(new InRangePlugin());
+        this.plugins.register(new ReverseNumberPlugin());
+        this.plugins.register(new DecimalPartPlugin());
+        this.plugins.register(new IntegerPartPlugin());
+
+        // 文字列操作
+        this.plugins.register(new ReverseStringPlugin());
+        this.plugins.register(new FirstCharPlugin());
+        this.plugins.register(new LastCharPlugin());
+        this.plugins.register(new IsNumberPlugin());
+        this.plugins.register(new IsEmptyPlugin());
+
+        // リスト
         this.plugins.register(new ListPlugin());
     }
 
@@ -114,7 +221,6 @@ export class WebEngine {
 
         const lines = code.split(/\r?\n/);
 
-        // 実行前にブロック構造を検査
         this.validateBlocks(lines);
 
         await this.executeLines(
@@ -149,11 +255,6 @@ export class WebEngine {
                 continue;
             }
 
-
-            // ====================================================
-            // 終わり
-            // ====================================================
-
             if (line === "終わり") {
 
                 return {
@@ -161,11 +262,6 @@ export class WebEngine {
                     type: "end"
                 };
             }
-
-
-            // ====================================================
-            // それ以外
-            // ====================================================
 
             if (line === "それ以外") {
 
@@ -175,11 +271,6 @@ export class WebEngine {
                 };
             }
 
-
-            // ====================================================
-            // 抜ける
-            // ====================================================
-
             if (line === "抜ける") {
 
                 return {
@@ -187,11 +278,6 @@ export class WebEngine {
                     type: "break"
                 };
             }
-
-
-            // ====================================================
-            // もし
-            // ====================================================
 
             if (line.startsWith("もし ")) {
 
@@ -221,7 +307,6 @@ export class WebEngine {
                         error.message
                     );
                 }
-
 
                 if (result) {
 
@@ -262,11 +347,6 @@ export class WebEngine {
 
                 continue;
             }
-
-
-            // ====================================================
-            // 繰り返す
-            // ====================================================
 
             if (line.startsWith("繰り返す ")) {
 
@@ -335,11 +415,6 @@ export class WebEngine {
                 continue;
             }
 
-
-            // ====================================================
-            // 通常命令
-            // ====================================================
-
             try {
 
                 const handled =
@@ -377,10 +452,6 @@ export class WebEngine {
     }
 
 
-    // ============================================================
-    // ブロック構造チェック
-    // ============================================================
-
     validateBlocks(lines) {
 
         const stack = [];
@@ -393,7 +464,6 @@ export class WebEngine {
                 continue;
             }
 
-
             if (line.startsWith("もし ")) {
 
                 stack.push({
@@ -405,7 +475,6 @@ export class WebEngine {
                 continue;
             }
 
-
             if (line.startsWith("繰り返す ")) {
 
                 stack.push({
@@ -416,7 +485,6 @@ export class WebEngine {
 
                 continue;
             }
-
 
             if (line === "それ以外") {
 
@@ -455,7 +523,6 @@ export class WebEngine {
                 continue;
             }
 
-
             if (line === "終わり") {
 
                 if (stack.length === 0) {
@@ -472,7 +539,6 @@ export class WebEngine {
                 continue;
             }
         }
-
 
         if (stack.length > 0) {
 
@@ -493,10 +559,6 @@ export class WebEngine {
     }
 
 
-    // ============================================================
-    // ブロック検索
-    // ============================================================
-
     findBlock(lines, start, end) {
 
         let depth = 0;
@@ -516,7 +578,6 @@ export class WebEngine {
                 continue;
             }
 
-
             if (line === "終わり") {
 
                 depth--;
@@ -532,7 +593,6 @@ export class WebEngine {
                 continue;
             }
 
-
             if (
                 line === "それ以外" &&
                 depth === 1
@@ -542,7 +602,6 @@ export class WebEngine {
             }
         }
 
-
         throw this.createLineError(
             start + 1,
             "ブロックを閉じられません。",
@@ -550,10 +609,6 @@ export class WebEngine {
         );
     }
 
-
-    // ============================================================
-    // エラー生成
-    // ============================================================
 
     createLineError(
         lineNumber,

@@ -783,6 +783,614 @@
     }
   };
 
+  // web/plugins/average.js
+  var AveragePlugin = class extends WebPlugin {
+    constructor() {
+      super("\u5E73\u5747");
+    }
+    async execute(line, context) {
+      const expression = line.replace(/^平均\s*/, "");
+      const values = expression.split(",").map(
+        (v) => Number(context.parser.parseValue(v.trim(), context.runtime))
+      );
+      context.runtime.write(
+        values.reduce((a, b) => a + b, 0) / values.length
+      );
+    }
+  };
+
+  // web/plugins/sum.js
+  var SumPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u5408\u8A08");
+    }
+    async execute(line, context) {
+      const expression = line.replace(/^合計\s*/, "");
+      const values = expression.split(",").map(
+        (v) => Number(context.parser.parseValue(v.trim(), context.runtime))
+      );
+      context.runtime.write(
+        values.reduce((a, b) => a + b, 0)
+      );
+    }
+  };
+
+  // web/plugins/range.js
+  var RangePlugin = class extends WebPlugin {
+    constructor() {
+      super("\u7BC4\u56F2");
+    }
+    async execute(line, context) {
+      const expression = line.replace(/^範囲\s*/, "");
+      const values = expression.split(",").map(
+        (v) => Number(context.parser.parseValue(v.trim(), context.runtime))
+      );
+      context.runtime.write(
+        Math.max(...values) - Math.min(...values)
+      );
+    }
+  };
+
+  // web/plugins/even.js
+  var EvenPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u5076\u6570\u304B");
+    }
+    async execute(line, context) {
+      const expression = line.replace(/^偶数か\s*/, "");
+      const value = Number(
+        context.parser.parseValue(expression, context.runtime)
+      );
+      context.runtime.write(value % 2 === 0);
+    }
+  };
+
+  // web/plugins/odd.js
+  var OddPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u5947\u6570\u304B");
+    }
+    async execute(line, context) {
+      const expression = line.replace(/^奇数か\s*/, "");
+      const value = Number(
+        context.parser.parseValue(expression, context.runtime)
+      );
+      context.runtime.write(value % 2 !== 0);
+    }
+  };
+
+  // web/plugins/positive.js
+  var PositivePlugin = class extends WebPlugin {
+    constructor() {
+      super("\u6B63\u6570\u304B");
+    }
+    async execute(line, context) {
+      const expression = line.replace(/^正数か\s*/, "");
+      const value = Number(
+        context.parser.parseValue(expression, context.runtime)
+      );
+      context.runtime.write(value > 0);
+    }
+  };
+
+  // web/plugins/negative.js
+  var NegativePlugin = class extends WebPlugin {
+    constructor() {
+      super("\u8CA0\u6570\u304B");
+    }
+    async execute(line, context) {
+      const expression = line.replace(/^負数か\s*/, "");
+      const value = Number(
+        context.parser.parseValue(expression, context.runtime)
+      );
+      context.runtime.write(value < 0);
+    }
+  };
+
+  // web/plugins/zero.js
+  var ZeroPlugin = class extends WebPlugin {
+    constructor() {
+      super("0\u304B");
+    }
+    async execute(line, context) {
+      const expression = line.replace(/^0か\s*/, "");
+      const value = Number(
+        context.parser.parseValue(expression, context.runtime)
+      );
+      context.runtime.write(value === 0);
+    }
+  };
+
+  // web/plugins/string_length.js
+  var StringLengthPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u6587\u5B57\u306E\u9577\u3055");
+    }
+    async execute(line, context) {
+      const match = line.match(/^文字の長さ\s+「(.+)」$/);
+      if (!match) return;
+      context.runtime.write(match[1].length);
+    }
+  };
+
+  // web/plugins/string_find.js
+  var StringFindPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u6587\u5B57\u3092\u63A2\u3059");
+    }
+    async execute(line, context) {
+      const match = line.match(/^文字を探す\s+「(.+)」\s+「(.+)」$/);
+      if (!match) return;
+      context.runtime.write(
+        match[1].indexOf(match[2])
+      );
+    }
+  };
+
+  // web/plugins/string_replace.js
+  var StringReplacePlugin = class extends WebPlugin {
+    constructor() {
+      super("\u6587\u5B57\u3092\u7F6E\u304D\u63DB\u3048\u308B");
+    }
+    async execute(line, context) {
+      const match = line.match(/^文字を置き換える\s+「(.+)」\s+「(.+)」\s+「(.+)」$/);
+      if (!match) return;
+      context.runtime.write(
+        match[1].split(match[2]).join(match[3])
+      );
+    }
+  };
+
+  // web/plugins/string_slice.js
+  var StringSlicePlugin = class extends WebPlugin {
+    constructor() {
+      super("\u6587\u5B57\u3092\u5207\u308A\u51FA\u3059");
+    }
+    async execute(line, context) {
+      const match = line.match(/^文字を切り出す\s+「(.+)」\s+(.+)\s+(.+)$/);
+      if (!match) return;
+      const start = Number(
+        context.parser.parseValue(match[2], context.runtime)
+      );
+      const end = Number(
+        context.parser.parseValue(match[3], context.runtime)
+      );
+      context.runtime.write(
+        match[1].slice(start, end)
+      );
+    }
+  };
+
+  // web/plugins/strip.js
+  var StripPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u7A7A\u767D\u3092\u6D88\u3059");
+    }
+    async execute(line, context) {
+      const match = line.match(/^空白を消す\s+「(.+)」$/);
+      if (!match) return;
+      context.runtime.write(
+        match[1].trim()
+      );
+    }
+  };
+
+  // web/plugins/contains.js
+  var ContainsPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u6587\u5B57\u304C\u542B\u307E\u308C\u308B");
+    }
+    async execute(line, context) {
+      const match = line.match(/^文字が含まれる\s+「(.+)」\s+「(.+)」$/);
+      if (!match) return;
+      context.runtime.write(
+        match[1].includes(match[2])
+      );
+    }
+  };
+
+  // web/plugins/sqrt.js
+  var SqrtPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u5E73\u65B9\u6839");
+    }
+    async execute(line, context) {
+      const expression = line.replace(/^平方根\s*/, "");
+      const value = Number(
+        context.parser.parseValue(expression, context.runtime)
+      );
+      context.runtime.write(Math.sqrt(value));
+    }
+  };
+
+  // web/plugins/power.js
+  var PowerPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u3079\u304D\u4E57");
+    }
+    async execute(line, context) {
+      const match = line.match(/^べき乗\s+(.+)\s+(.+)$/);
+      if (!match) return;
+      const a = Number(
+        context.parser.parseValue(match[1], context.runtime)
+      );
+      const b = Number(
+        context.parser.parseValue(match[2], context.runtime)
+      );
+      context.runtime.write(Math.pow(a, b));
+    }
+  };
+
+  // web/plugins/floor.js
+  var FloorPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u5207\u308A\u6368\u3066");
+    }
+    async execute(line, context) {
+      const expression = line.replace(/^切り捨て\s*/, "");
+      const value = Number(
+        context.parser.parseValue(expression, context.runtime)
+      );
+      context.runtime.write(Math.floor(value));
+    }
+  };
+
+  // web/plugins/ceil.js
+  var CeilPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u5207\u308A\u4E0A\u3052");
+    }
+    async execute(line, context) {
+      const expression = line.replace(/^切り上げ\s*/, "");
+      const value = Number(
+        context.parser.parseValue(expression, context.runtime)
+      );
+      context.runtime.write(Math.ceil(value));
+    }
+  };
+
+  // web/plugins/random.js
+  var RandomPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u4E71\u6570");
+    }
+    async execute(line, context) {
+      const match = line.match(/^乱数\s+(.+)\s+(.+)$/);
+      if (!match) return;
+      const min = Number(
+        context.parser.parseValue(match[1], context.runtime)
+      );
+      const max = Number(
+        context.parser.parseValue(match[2], context.runtime)
+      );
+      context.runtime.write(
+        Math.floor(Math.random() * (max - min + 1)) + min
+      );
+    }
+  };
+
+  // web/plugins/gcd.js
+  var GcdPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u6700\u5927\u516C\u7D04\u6570");
+    }
+    async execute(line, context) {
+      const match = line.match(/^最大公約数\s+(.+)\s+(.+)$/);
+      if (!match) return;
+      let a = Math.abs(Number(
+        context.parser.parseValue(match[1], context.runtime)
+      ));
+      let b = Math.abs(Number(
+        context.parser.parseValue(match[2], context.runtime)
+      ));
+      while (b !== 0) {
+        [a, b] = [b, a % b];
+      }
+      context.runtime.write(a);
+    }
+  };
+
+  // web/plugins/lcm.js
+  var LcmPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u6700\u5C0F\u516C\u500D\u6570");
+    }
+    async execute(line, context) {
+      const match = line.match(/^最小公倍数\s+(.+)\s+(.+)$/);
+      if (!match) return;
+      let a = Math.abs(Number(
+        context.parser.parseValue(match[1], context.runtime)
+      ));
+      let b = Math.abs(Number(
+        context.parser.parseValue(match[2], context.runtime)
+      ));
+      const originalA = a;
+      const originalB = b;
+      while (b !== 0) {
+        [a, b] = [b, a % b];
+      }
+      context.runtime.write(
+        originalA === 0 || originalB === 0 ? 0 : Math.abs(originalA * originalB) / a
+      );
+    }
+  };
+
+  // web/plugins/prime.js
+  var PrimePlugin = class extends WebPlugin {
+    constructor() {
+      super("\u7D20\u6570\u304B");
+    }
+    async execute(line, context) {
+      const expression = line.replace(/^素数か\s*/, "");
+      const n = Number(
+        context.parser.parseValue(expression, context.runtime)
+      );
+      if (n < 2 || !Number.isInteger(n)) {
+        context.runtime.write(false);
+        return;
+      }
+      for (let i = 2; i * i <= n; i++) {
+        if (n % i === 0) {
+          context.runtime.write(false);
+          return;
+        }
+      }
+      context.runtime.write(true);
+    }
+  };
+
+  // web/plugins/factorial.js
+  var FactorialPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u968E\u4E57");
+    }
+    async execute(line, context) {
+      const expression = line.replace(/^階乗\s*/, "");
+      const n = Number(
+        context.parser.parseValue(expression, context.runtime)
+      );
+      let result = 1;
+      for (let i = 2; i <= n; i++) {
+        result *= i;
+      }
+      context.runtime.write(result);
+    }
+  };
+
+  // web/plugins/sign.js
+  var SignPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u7B26\u53F7");
+    }
+    async execute(line, context) {
+      const expression = line.replace(/^符号\s*/, "");
+      const value = Number(
+        context.parser.parseValue(expression, context.runtime)
+      );
+      context.runtime.write(Math.sign(value));
+    }
+  };
+
+  // web/plugins/negate.js
+  var NegatePlugin = class extends WebPlugin {
+    constructor() {
+      super("\u6570\u5024\u3092\u53CD\u8EE2");
+    }
+    async execute(line, context) {
+      const expression = line.replace(/^数値を反転\s*/, "");
+      const value = Number(
+        context.parser.parseValue(expression, context.runtime)
+      );
+      context.runtime.write(-value);
+    }
+  };
+
+  // web/plugins/binary.js
+  var BinaryPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u6570\u5024\u30922\u9032\u6570\u306B\u3059\u308B");
+    }
+    async execute(line, context) {
+      const expression = line.replace(/^数値を2進数にする\s*/, "");
+      const value = Number(
+        context.parser.parseValue(expression, context.runtime)
+      );
+      context.runtime.write(
+        Math.trunc(value).toString(2)
+      );
+    }
+  };
+
+  // web/plugins/hex.js
+  var HexPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u6570\u5024\u309216\u9032\u6570\u306B\u3059\u308B");
+    }
+    async execute(line, context) {
+      const expression = line.replace(/^数値を16進数にする\s*/, "");
+      const value = Number(
+        context.parser.parseValue(expression, context.runtime)
+      );
+      context.runtime.write(
+        Math.trunc(value).toString(16)
+      );
+    }
+  };
+
+  // web/plugins/binary_to_number.js
+  var BinaryToNumberPlugin = class extends WebPlugin {
+    constructor() {
+      super("2\u9032\u6570\u3092\u6570\u5B57\u306B\u3059\u308B");
+    }
+    async execute(line, context) {
+      const match = line.match(/^2進数を数字にする\s+「(.+)」$/);
+      if (!match) return;
+      context.runtime.write(
+        parseInt(match[1], 2)
+      );
+    }
+  };
+
+  // web/plugins/hex_to_number.js
+  var HexToNumberPlugin = class extends WebPlugin {
+    constructor() {
+      super("16\u9032\u6570\u3092\u6570\u5B57\u306B\u3059\u308B");
+    }
+    async execute(line, context) {
+      const match = line.match(/^16進数を数字にする\s+「(.+)」$/);
+      if (!match) return;
+      context.runtime.write(
+        parseInt(match[1], 16)
+      );
+    }
+  };
+
+  // web/plugins/in_range.js
+  var InRangePlugin = class extends WebPlugin {
+    constructor() {
+      super("\u6570\u5024\u306E\u7BC4\u56F2\u5185\u304B");
+    }
+    async execute(line, context) {
+      const match = line.match(/^数値の範囲内か\s+(.+)\s+(.+)\s+(.+)$/);
+      if (!match) return;
+      const value = Number(
+        context.parser.parseValue(match[1], context.runtime)
+      );
+      const min = Number(
+        context.parser.parseValue(match[2], context.runtime)
+      );
+      const max = Number(
+        context.parser.parseValue(match[3], context.runtime)
+      );
+      context.runtime.write(
+        value >= min && value <= max
+      );
+    }
+  };
+
+  // web/plugins/reverse_number.js
+  var ReverseNumberPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u6B63\u8CA0\u3092\u53CD\u8EE2");
+    }
+    async execute(line, context) {
+      const expression = line.replace(/^正負を反転\s*/, "");
+      const value = Number(
+        context.parser.parseValue(expression, context.runtime)
+      );
+      context.runtime.write(-value);
+    }
+  };
+
+  // web/plugins/decimal_part.js
+  var DecimalPartPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u5C0F\u6570\u90E8\u5206");
+    }
+    async execute(line, context) {
+      const expression = line.replace(/^小数部分\s*/, "");
+      const value = Number(
+        context.parser.parseValue(
+          expression,
+          context.runtime
+        )
+      );
+      const integerPart = Math.trunc(value);
+      const decimalPart = value - integerPart;
+      const roundedDecimalPart = Math.round(
+        (decimalPart + Number.EPSILON) * 1e12
+      ) / 1e12;
+      context.runtime.write(
+        roundedDecimalPart
+      );
+    }
+  };
+
+  // web/plugins/integer_part.js
+  var IntegerPartPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u6574\u6570\u90E8\u5206");
+    }
+    async execute(line, context) {
+      const expression = line.replace(/^整数部分\s*/, "");
+      const value = Number(
+        context.parser.parseValue(expression, context.runtime)
+      );
+      context.runtime.write(Math.trunc(value));
+    }
+  };
+
+  // web/plugins/reverse_string.js
+  var ReverseStringPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u6587\u5B57\u3092\u53CD\u8EE2");
+    }
+    async execute(line, context) {
+      const match = line.match(/^文字を反転\s+「(.+)」$/);
+      if (!match) return;
+      context.runtime.write(
+        [...match[1]].reverse().join("")
+      );
+    }
+  };
+
+  // web/plugins/first_char.js
+  var FirstCharPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u6587\u5B57\u306E\u5148\u982D");
+    }
+    async execute(line, context) {
+      const match = line.match(/^文字の先頭\s+「(.+)」$/);
+      if (!match) return;
+      context.runtime.write(
+        [...match[1]][0] ?? ""
+      );
+    }
+  };
+
+  // web/plugins/last_char.js
+  var LastCharPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u6587\u5B57\u306E\u672B\u5C3E");
+    }
+    async execute(line, context) {
+      const match = line.match(/^文字の末尾\s+「(.+)」$/);
+      if (!match) return;
+      const chars = [...match[1]];
+      context.runtime.write(
+        chars.length > 0 ? chars[chars.length - 1] : ""
+      );
+    }
+  };
+
+  // web/plugins/is_number.js
+  var IsNumberPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u6587\u5B57\u304C\u6570\u5B57\u304B");
+    }
+    async execute(line, context) {
+      const match = line.match(/^文字が数字か\s+「(.+)」$/);
+      if (!match) return;
+      context.runtime.write(
+        /^[0-9]+(?:\.[0-9]+)?$/.test(match[1])
+      );
+    }
+  };
+
+  // web/plugins/is_empty.js
+  var IsEmptyPlugin = class extends WebPlugin {
+    constructor() {
+      super("\u6587\u5B57\u304C\u7A7A\u304B");
+    }
+    async execute(line, context) {
+      const match = line.match(/^文字が空か\s+「(.*)」$/);
+      if (!match) return;
+      context.runtime.write(
+        match[1].length === 0
+      );
+    }
+  };
+
   // web/plugins/list.js
   var ListPlugin = class extends WebPlugin {
     constructor() {
@@ -902,7 +1510,7 @@
   };
   var WebEngine = class {
     constructor(output2 = null) {
-      this.version = "2.1.0";
+      this.version = "2.1.1";
       this.runtime = new Runtime(output2);
       this.parser = new JapaneseParser();
       this.plugins = new PluginManager();
@@ -929,6 +1537,44 @@
       this.plugins.register(new AbsolutePlugin());
       this.plugins.register(new RoundNumberPlugin());
       this.plugins.register(new ExistsPlugin());
+      this.plugins.register(new AveragePlugin());
+      this.plugins.register(new SumPlugin());
+      this.plugins.register(new RangePlugin());
+      this.plugins.register(new EvenPlugin());
+      this.plugins.register(new OddPlugin());
+      this.plugins.register(new PositivePlugin());
+      this.plugins.register(new NegativePlugin());
+      this.plugins.register(new ZeroPlugin());
+      this.plugins.register(new StringLengthPlugin());
+      this.plugins.register(new StringFindPlugin());
+      this.plugins.register(new StringReplacePlugin());
+      this.plugins.register(new StringSlicePlugin());
+      this.plugins.register(new StripPlugin());
+      this.plugins.register(new ContainsPlugin());
+      this.plugins.register(new SqrtPlugin());
+      this.plugins.register(new PowerPlugin());
+      this.plugins.register(new FloorPlugin());
+      this.plugins.register(new CeilPlugin());
+      this.plugins.register(new RandomPlugin());
+      this.plugins.register(new GcdPlugin());
+      this.plugins.register(new LcmPlugin());
+      this.plugins.register(new PrimePlugin());
+      this.plugins.register(new FactorialPlugin());
+      this.plugins.register(new SignPlugin());
+      this.plugins.register(new NegatePlugin());
+      this.plugins.register(new BinaryPlugin());
+      this.plugins.register(new HexPlugin());
+      this.plugins.register(new BinaryToNumberPlugin());
+      this.plugins.register(new HexToNumberPlugin());
+      this.plugins.register(new InRangePlugin());
+      this.plugins.register(new ReverseNumberPlugin());
+      this.plugins.register(new DecimalPartPlugin());
+      this.plugins.register(new IntegerPartPlugin());
+      this.plugins.register(new ReverseStringPlugin());
+      this.plugins.register(new FirstCharPlugin());
+      this.plugins.register(new LastCharPlugin());
+      this.plugins.register(new IsNumberPlugin());
+      this.plugins.register(new IsEmptyPlugin());
       this.plugins.register(new ListPlugin());
     }
     getContext() {
@@ -1092,9 +1738,6 @@
       }
       return null;
     }
-    // ============================================================
-    // ブロック構造チェック
-    // ============================================================
     validateBlocks(lines) {
       const stack = [];
       for (let i = 0; i < lines.length; i++) {
@@ -1166,9 +1809,6 @@
         );
       }
     }
-    // ============================================================
-    // ブロック検索
-    // ============================================================
     findBlock(lines, start, end) {
       let depth = 0;
       let elseIndex = -1;
@@ -1198,9 +1838,6 @@
         "\u5BFE\u5FDC\u3059\u308B\u300C\u7D42\u308F\u308A\u300D\u304C\u3042\u308A\u307E\u305B\u3093\u3002"
       );
     }
-    // ============================================================
-    // エラー生成
-    // ============================================================
     createLineError(lineNumber, message, cause = null) {
       return new WebLanguageError(
         message,
@@ -1406,6 +2043,6 @@
   setupButtons();
   setupEditor();
   setStatus(
-    "Japanese Language Web v2.1.0"
+    "Japanese Language Web v2.1.1"
   );
 })();

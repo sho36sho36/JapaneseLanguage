@@ -36,6 +36,44 @@ from pc.plugins.minimum import MinimumPlugin
 from pc.plugins.absolute import AbsolutePlugin
 from pc.plugins.round_number import RoundNumberPlugin
 from pc.plugins.exists import ExistsPlugin
+from pc.plugins.average import AveragePlugin
+from pc.plugins.sum import SumPlugin
+from pc.plugins.range import RangePlugin
+from pc.plugins.even import EvenPlugin
+from pc.plugins.odd import OddPlugin
+from pc.plugins.positive import PositivePlugin
+from pc.plugins.negative import NegativePlugin
+from pc.plugins.zero import ZeroPlugin
+from pc.plugins.string_length import StringLengthPlugin
+from pc.plugins.string_find import StringFindPlugin
+from pc.plugins.string_replace import StringReplacePlugin
+from pc.plugins.string_slice import StringSlicePlugin
+from pc.plugins.strip import StripPlugin
+from pc.plugins.contains import ContainsPlugin
+from pc.plugins.sqrt import SqrtPlugin
+from pc.plugins.power import PowerPlugin
+from pc.plugins.floor import FloorPlugin
+from pc.plugins.ceil import CeilPlugin
+from pc.plugins.random import RandomPlugin
+from pc.plugins.gcd import GcdPlugin
+from pc.plugins.lcm import LcmPlugin
+from pc.plugins.prime import PrimePlugin
+from pc.plugins.factorial import FactorialPlugin
+from pc.plugins.sign import SignPlugin
+from pc.plugins.negate import NegatePlugin
+from pc.plugins.binary import BinaryPlugin
+from pc.plugins.hex import HexPlugin
+from pc.plugins.binary_to_number import BinaryToNumberPlugin
+from pc.plugins.hex_to_number import HexToNumberPlugin
+from pc.plugins.in_range import InRangePlugin
+from pc.plugins.reverse_number import ReverseNumberPlugin
+from pc.plugins.decimal_part import DecimalPartPlugin
+from pc.plugins.integer_part import IntegerPartPlugin
+from pc.plugins.reverse_string import ReverseStringPlugin
+from pc.plugins.first_char import FirstCharPlugin
+from pc.plugins.last_char import LastCharPlugin
+from pc.plugins.is_number import IsNumberPlugin
+from pc.plugins.is_empty import IsEmptyPlugin
 
 
 class JapaneseLanguageError(Exception):
@@ -67,7 +105,7 @@ class Engine:
 
     def __init__(self):
 
-        self.version = "2.1.0"
+        self.version = "2.1.1"
 
         self.plugins = PluginManager()
 
@@ -109,6 +147,44 @@ class Engine:
         self.plugins.register(AbsolutePlugin())
         self.plugins.register(RoundNumberPlugin())
         self.plugins.register(ExistsPlugin())
+        self.plugins.register(AveragePlugin())
+        self.plugins.register(SumPlugin())
+        self.plugins.register(RangePlugin())
+        self.plugins.register(EvenPlugin())
+        self.plugins.register(OddPlugin())
+        self.plugins.register(PositivePlugin())
+        self.plugins.register(NegativePlugin())
+        self.plugins.register(ZeroPlugin())
+        self.plugins.register(StringLengthPlugin())
+        self.plugins.register(StringFindPlugin())
+        self.plugins.register(StringReplacePlugin())
+        self.plugins.register(StringSlicePlugin())
+        self.plugins.register(StripPlugin())
+        self.plugins.register(ContainsPlugin())
+        self.plugins.register(SqrtPlugin())
+        self.plugins.register(PowerPlugin())
+        self.plugins.register(FloorPlugin())
+        self.plugins.register(CeilPlugin())
+        self.plugins.register(RandomPlugin())
+        self.plugins.register(GcdPlugin())
+        self.plugins.register(LcmPlugin())
+        self.plugins.register(PrimePlugin())
+        self.plugins.register(FactorialPlugin())
+        self.plugins.register(SignPlugin())
+        self.plugins.register(NegatePlugin())
+        self.plugins.register(BinaryPlugin())
+        self.plugins.register(HexPlugin())
+        self.plugins.register(BinaryToNumberPlugin())
+        self.plugins.register(HexToNumberPlugin())
+        self.plugins.register(InRangePlugin())
+        self.plugins.register(ReverseNumberPlugin())
+        self.plugins.register(DecimalPartPlugin())
+        self.plugins.register(IntegerPartPlugin())
+        self.plugins.register(ReverseStringPlugin())
+        self.plugins.register(FirstCharPlugin())
+        self.plugins.register(LastCharPlugin())
+        self.plugins.register(IsNumberPlugin())
+        self.plugins.register(IsEmptyPlugin())
 
     # ============================================================
     # ファイル実行
