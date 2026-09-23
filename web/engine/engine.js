@@ -1,6 +1,7 @@
 import { JapaneseParser } from "./parser.js";
 import { Runtime } from "./runtime.js";
 import { PluginManager } from "./plugin.js";
+import { PackageManager } from "../package/manager.js";
 
 import { DisplayPlugin } from "../plugins/display.js";
 import { VariablePlugin } from "../plugins/variable.js";
@@ -73,6 +74,7 @@ import { IsNumberPlugin } from "../plugins/is_number.js";
 import { IsEmptyPlugin } from "../plugins/is_empty.js";
 
 import { ListPlugin } from "../plugins/list.js";
+import { ImportPackagePlugin } from "../plugins/import_package.js";
 
 
 export class WebLanguageError extends Error {
@@ -108,11 +110,12 @@ export class WebEngine {
 
     constructor(output = null) {
 
-        this.version = "2.1.1";
+        this.version = "2.2.0";
 
         this.runtime = new Runtime(output);
         this.parser = new JapaneseParser();
         this.plugins = new PluginManager();
+        this.packageManager = new PackageManager();
 
         this.registerPlugins();
     }
@@ -202,8 +205,27 @@ export class WebEngine {
 
         // リスト
         this.plugins.register(new ListPlugin());
+        this.plugins.register(new ImportPackagePlugin());
     }
 
+
+    async importPackage(repository) {
+        const packageData =
+            await this.packageManager.install(repository);
+
+        const lines =
+            packageData.source.split(/\r?\n/);
+
+        this.validateBlocks(lines);
+
+        await this.executeLines(
+            lines,
+            0,
+            lines.length
+        );
+
+        return packageData;
+    }
 
     getContext() {
 

@@ -1,17 +1,17 @@
-import sys
+﻿import sys
 from pc.engine import Engine
 
 
-VERSION = "2.1.1"
+VERSION = "2.2.0"
 
 def show_help():
     print("Japanese Language")
-    print(f"バージョン: {VERSION}")
+    print(f"繝舌・繧ｸ繝ｧ繝ｳ: {VERSION}")
     print()
-    print("使い方:")
-    print("  jp ファイル.jp")
+    print("菴ｿ縺・婿:")
+    print("  jp 繝輔ぃ繧､繝ｫ.jp")
     print()
-    print("例:")
+    print("萓・")
     print("  jp hello.jp")
 
 
@@ -33,7 +33,7 @@ def main():
     filename = args[0]
 
     if not filename.lower().endswith(".jp"):
-        print("エラー: .jp ファイルを指定してください。")
+        print("繧ｨ繝ｩ繝ｼ: .jp 繝輔ぃ繧､繝ｫ繧呈欠螳壹＠縺ｦ縺上□縺輔＞縲・)
         return 1
 
     try:
@@ -41,16 +41,16 @@ def main():
         engine.run_file(filename)
 
     except FileNotFoundError:
-        print(f"エラー: ファイルが見つかりません: {filename}")
+        print(f"繧ｨ繝ｩ繝ｼ: 繝輔ぃ繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: {filename}")
         return 1
 
     except UnicodeDecodeError:
-        print("エラー: ファイルをUTF-8で読み込めません。")
+        print("繧ｨ繝ｩ繝ｼ: 繝輔ぃ繧､繝ｫ繧旦TF-8縺ｧ隱ｭ縺ｿ霎ｼ繧√∪縺帙ｓ縲・)
         return 1
 
     except Exception as error:
-        print("実行中にエラーが発生しました。")
-        print(f"詳細: {error}")
+        print("螳溯｡御ｸｭ縺ｫ繧ｨ繝ｩ繝ｼ縺檎匱逕溘＠縺ｾ縺励◆縲・)
+        print(f"隧ｳ邏ｰ: {error}")
         return 1
 
     return 0

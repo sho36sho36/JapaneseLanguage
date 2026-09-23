@@ -285,5 +285,5 @@ setupButtons();
 setupEditor();
 
 setStatus(
-    "Japanese Language Web v2.1.1"
+    "Japanese Language Web v2.2.0"
 );

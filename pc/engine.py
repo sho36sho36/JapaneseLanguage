@@ -7,6 +7,7 @@ from pc.plugins.variable import VariablePlugin
 from pc.plugins.input import InputPlugin
 from pc.plugins.calculate import CalculatePlugin
 from pc.plugins.wait import WaitPlugin
+from pc.plugins.import_module import ImportModulePlugin
 
 from pc.plugins.if_plugin import IfPlugin
 from pc.plugins.else_plugin import ElsePlugin
@@ -105,7 +106,7 @@ class Engine:
 
     def __init__(self):
 
-        self.version = "2.1.1"
+        self.version = "2.2.0"
 
         self.plugins = PluginManager()
 
@@ -115,6 +116,7 @@ class Engine:
         self.plugins.register(InputPlugin())
         self.plugins.register(CalculatePlugin())
         self.plugins.register(WaitPlugin())
+        self.plugins.register(ImportModulePlugin())
 
         # 第2弾
         self.plugins.register(IfPlugin())
@@ -196,7 +198,7 @@ class Engine:
 
         try:
             source = path.read_text(
-                encoding="utf-8"
+                encoding="utf-8-sig"
             )
         except UnicodeDecodeError:
             raise JapaneseLanguageError(
@@ -570,9 +572,33 @@ class Engine:
                 error.msg
             )
 
+        def __jp_import_module__(module_path):
+            from pc.package.module_loader import ModuleLoader
+
+            loader = ModuleLoader(
+                Path(filename).parent
+            )
+
+            module = loader.load(module_path)
+
+            if module["already_loaded"]:
+                return None
+
+            module_code = self.translate(
+                module["source"],
+                str(module["path"])
+            )
+
+            self.execute(
+                module_code,
+                str(module["path"])
+            )
+
+            return None
         namespace = {
             "__name__": "__main__",
-            "__file__": filename
+            "__file__": filename,
+            "__jp_import_module__": __jp_import_module__
         }
 
         try:

@@ -1,4 +1,4 @@
-export class WebPlugin {
+﻿export class WebPlugin {
     constructor(name) {
         this.name = name;
     }
@@ -8,12 +8,10 @@ export class WebPlugin {
             return true;
         }
 
-        // 「表示する こんにちは」のような形式
         if (line.startsWith(this.name + " ")) {
             return true;
         }
 
-        // 「変数「名前」...」のような形式
         if (line.startsWith(this.name + "「")) {
             return true;
         }

@@ -29,7 +29,7 @@
       if (value === "") {
         return "";
       }
-      if (value.startsWith("\u300C") && value.endsWith("\u300D")) {
+      if (value.startsWith("「") && value.endsWith("」")) {
         return value.slice(1, -1);
       }
       if (value.length >= 2 && value.startsWith('"') && value.endsWith('"')) {
@@ -44,13 +44,13 @@
       if (value === "false") {
         return false;
       }
-      if (value === "\u771F") {
+      if (value === "真") {
         return true;
       }
-      if (value === "\u507D") {
+      if (value === "偽") {
         return false;
       }
-      if (value === "null" || value === "\u306A\u3057") {
+      if (value === "null" || value === "なし") {
         return null;
       }
       if (/^[-+]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value)) {
@@ -91,7 +91,7 @@
       );
       if (typeof value !== "number" || !Number.isFinite(value)) {
         throw new Error(
-          `\u300C${expression}\u300D\u306F\u6570\u5024\u3067\u306F\u3042\u308A\u307E\u305B\u3093\u3002`
+          `「${expression}」は数値ではありません。`
         );
       }
       return value;
@@ -109,7 +109,7 @@
       let expr = String(expression).trim();
       if (expr === "") {
         throw new Error(
-          "\u5F0F\u304C\u7A7A\u3067\u3059\u3002"
+          "式が空です。"
         );
       }
       expr = expr.replace(/\b真\b/g, "true").replace(/\b偽\b/g, "false");
@@ -151,7 +151,7 @@
         return result;
       } catch (error) {
         throw new Error(
-          `\u5F0F\u300C${expression}\u300D\u3092\u8A08\u7B97\u3067\u304D\u307E\u305B\u3093\u3002`
+          `式「${expression}」を計算できません。`
         );
       }
     }
@@ -166,12 +166,12 @@
       let inDoubleQuote = false;
       let inSingleQuote = false;
       for (const char of String(expression)) {
-        if (char === "\u300C" && !inDoubleQuote && !inSingleQuote) {
+        if (char === "「" && !inDoubleQuote && !inSingleQuote) {
           inJapaneseQuote = true;
           current += char;
           continue;
         }
-        if (char === "\u300D" && inJapaneseQuote) {
+        if (char === "」" && inJapaneseQuote) {
           inJapaneseQuote = false;
           current += char;
           continue;
@@ -244,7 +244,7 @@
     get(name) {
       if (!this.exists(name)) {
         throw new Error(
-          `\u5909\u6570\u300C${name}\u300D\u304C\u5B58\u5728\u3057\u307E\u305B\u3093\u3002`
+          `変数「${name}」が存在しません。`
         );
       }
       return this.variables[name];
@@ -298,14 +298,14 @@
       if (line.startsWith(this.name + " ")) {
         return true;
       }
-      if (line.startsWith(this.name + "\u300C")) {
+      if (line.startsWith(this.name + "「")) {
         return true;
       }
       return false;
     }
     async execute(line, context) {
       throw new Error(
-        `${this.name} \u30D7\u30E9\u30B0\u30A4\u30F3\u306B execute() \u304C\u5B9F\u88C5\u3055\u308C\u3066\u3044\u307E\u305B\u3093\u3002`
+        `${this.name} プラグインに execute() が実装されていません。`
       );
     }
   };
@@ -331,10 +331,104 @@
     }
   };
 
+  // web/package/manager.js
+  var PackageError = class extends Error {
+    constructor(message) {
+      super(message);
+      this.name = "PackageError";
+    }
+  };
+  var PackageManager = class {
+    constructor() {
+      this.cache = /* @__PURE__ */ new Map();
+    }
+    normalizeRepository(repository) {
+      repository = repository.trim();
+      if (repository.startsWith("github:")) {
+        repository = repository.slice(7);
+      }
+      if (repository.startsWith("https://github.com/") || repository.startsWith("http://github.com/")) {
+        repository = repository.replace(/\.git\/?$/, "").replace(/\/$/, "");
+        const parts = repository.split("/");
+        return {
+          owner: parts[parts.length - 2],
+          name: parts[parts.length - 1]
+        };
+      }
+      if (repository.includes("/") && !repository.includes("://")) {
+        const parts = repository.split("/");
+        return {
+          owner: parts[0],
+          name: parts[1].replace(/\.git$/, "")
+        };
+      }
+      throw new PackageError(
+        `GitHubリポジトリを認識できません: ${repository}`
+      );
+    }
+    getRawUrl(owner, repository, path) {
+      return `https://raw.githubusercontent.com/${owner}/${repository}/main/${path}`;
+    }
+    async fetchText(url) {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new PackageError(
+          `ファイルを取得できませんでした: ${response.status} ${response.statusText}`
+        );
+      }
+      return await response.text();
+    }
+    async install(repository) {
+      const { owner, name } = this.normalizeRepository(repository);
+      const manifestUrl = this.getRawUrl(owner, name, "package.jpkg");
+      const manifestText = await this.fetchText(manifestUrl);
+      let manifest;
+      try {
+        manifest = JSON.parse(manifestText.replace(/^\uFEFF/, ""));
+      } catch (error) {
+        throw new PackageError(
+          `package.jpkg のJSON形式が正しくありません。`
+        );
+      }
+      for (const key of ["name", "version", "main"]) {
+        if (typeof manifest[key] !== "string" || !manifest[key].trim()) {
+          throw new PackageError(
+            `package.jpkg に「${key}」がありません。`
+          );
+        }
+      }
+      const mainUrl = this.getRawUrl(owner, name, manifest.main);
+      const source = await this.fetchText(mainUrl);
+      const packageData = {
+        owner,
+        repository: name,
+        manifest,
+        source,
+        mainUrl
+      };
+      this.cache.set(manifest.name, packageData);
+      return packageData;
+    }
+    get(name) {
+      return this.cache.get(name) || null;
+    }
+    has(name) {
+      return this.cache.has(name);
+    }
+    list() {
+      return [...this.cache.values()].map(
+        (packageData) => ({
+          name: packageData.manifest.name,
+          version: packageData.manifest.version
+        })
+      );
+    }
+  };
+
   // web/plugins/display.js
   var DisplayPlugin = class extends WebPlugin {
     constructor() {
-      super("\u8868\u793A\u3059\u308B");
+      super("表示する");
     }
     async execute(line, context) {
       const expression = line.replace(/^表示する\s*/, "");
@@ -349,7 +443,7 @@
   // web/plugins/variable.js
   var VariablePlugin = class extends WebPlugin {
     constructor() {
-      super("\u5909\u6570");
+      super("変数");
     }
     async execute(line, context) {
       const match = line.match(
@@ -357,7 +451,7 @@
       );
       if (!match) {
         throw new Error(
-          `\u5909\u6570\u306E\u66F8\u5F0F\u304C\u6B63\u3057\u304F\u3042\u308A\u307E\u305B\u3093: ${line}`
+          `変数の書式が正しくありません: ${line}`
         );
       }
       const [, name, expression] = match;
@@ -372,7 +466,7 @@
   // web/plugins/input.js
   var InputPlugin = class extends WebPlugin {
     constructor() {
-      super("\u5165\u529B\u3059\u308B");
+      super("入力する");
     }
     async execute(line, context) {
       const match = line.match(
@@ -380,7 +474,7 @@
       );
       if (!match) {
         throw new Error(
-          `\u5165\u529B\u3059\u308B\u306E\u66F8\u5F0F\u304C\u6B63\u3057\u304F\u3042\u308A\u307E\u305B\u3093: ${line}`
+          `入力するの書式が正しくありません: ${line}`
         );
       }
       const [, variableName, message] = match;
@@ -401,7 +495,7 @@
   // web/plugins/calculate.js
   var CalculatePlugin = class extends WebPlugin {
     constructor() {
-      super("\u8A08\u7B97\u3059\u308B");
+      super("計算する");
     }
     async execute(line, context) {
       const expression = line.replace(/^計算する\s*/, "");
@@ -416,7 +510,7 @@
   // web/plugins/wait.js
   var WaitPlugin = class extends WebPlugin {
     constructor() {
-      super("\u5F85\u3064");
+      super("待つ");
     }
     async execute(line, context) {
       const expression = line.replace(/^待つ\s*/, "");
@@ -428,7 +522,7 @@
       );
       if (!Number.isFinite(seconds)) {
         throw new Error(
-          `\u5F85\u3064\u306B\u306F\u6570\u5B57\u3092\u6307\u5B9A\u3057\u3066\u304F\u3060\u3055\u3044: ${line}`
+          `待つには数字を指定してください: ${line}`
         );
       }
       await new Promise((resolve) => {
@@ -440,7 +534,7 @@
   // web/plugins/increase.js
   var IncreasePlugin = class extends WebPlugin {
     constructor() {
-      super("\u5897\u3084\u3059");
+      super("増やす");
     }
     async execute(line, context) {
       const match = line.match(
@@ -448,7 +542,7 @@
       );
       if (!match) {
         throw new Error(
-          `\u5897\u3084\u3059\u306E\u66F8\u5F0F\u304C\u6B63\u3057\u304F\u3042\u308A\u307E\u305B\u3093: ${line}`
+          `増やすの書式が正しくありません: ${line}`
         );
       }
       const [, name, amountExpression] = match;
@@ -471,7 +565,7 @@
   // web/plugins/decrease.js
   var DecreasePlugin = class extends WebPlugin {
     constructor() {
-      super("\u6E1B\u3089\u3059");
+      super("減らす");
     }
     async execute(line, context) {
       const match = line.match(
@@ -479,7 +573,7 @@
       );
       if (!match) {
         throw new Error(
-          `\u6E1B\u3089\u3059\u306E\u66F8\u5F0F\u304C\u6B63\u3057\u304F\u3042\u308A\u307E\u305B\u3093: ${line}`
+          `減らすの書式が正しくありません: ${line}`
         );
       }
       const [, name, amountExpression] = match;
@@ -502,7 +596,7 @@
   // web/plugins/multiply.js
   var MultiplyPlugin = class extends WebPlugin {
     constructor() {
-      super("\u639B\u3051\u308B");
+      super("掛ける");
     }
     async execute(line, context) {
       const match = line.match(
@@ -510,7 +604,7 @@
       );
       if (!match) {
         throw new Error(
-          `\u639B\u3051\u308B\u306E\u66F8\u5F0F\u304C\u6B63\u3057\u304F\u3042\u308A\u307E\u305B\u3093: ${line}`
+          `掛けるの書式が正しくありません: ${line}`
         );
       }
       const [, name, expression] = match;
@@ -533,7 +627,7 @@
   // web/plugins/divide.js
   var DividePlugin = class extends WebPlugin {
     constructor() {
-      super("\u5272\u308B");
+      super("割る");
     }
     async execute(line, context) {
       const match = line.match(
@@ -541,7 +635,7 @@
       );
       if (!match) {
         throw new Error(
-          `\u5272\u308B\u306E\u66F8\u5F0F\u304C\u6B63\u3057\u304F\u3042\u308A\u307E\u305B\u3093: ${line}`
+          `割るの書式が正しくありません: ${line}`
         );
       }
       const [, name, expression] = match;
@@ -556,7 +650,7 @@
       );
       if (value === 0) {
         throw new Error(
-          "0\u3067\u5272\u308B\u3053\u3068\u306F\u3067\u304D\u307E\u305B\u3093\u3002"
+          "0で割ることはできません。"
         );
       }
       context.runtime.set(
@@ -569,7 +663,7 @@
   // web/plugins/remainder.js
   var RemainderPlugin = class extends WebPlugin {
     constructor() {
-      super("\u4F59\u308A");
+      super("余り");
     }
     async execute(line, context) {
       const match = line.match(
@@ -577,7 +671,7 @@
       );
       if (!match) {
         throw new Error(
-          `\u4F59\u308A\u306E\u66F8\u5F0F\u304C\u6B63\u3057\u304F\u3042\u308A\u307E\u305B\u3093: ${line}`
+          `余りの書式が正しくありません: ${line}`
         );
       }
       const [, name, expression] = match;
@@ -592,7 +686,7 @@
       );
       if (value === 0) {
         throw new Error(
-          "0\u3067\u5272\u308B\u3053\u3068\u306F\u3067\u304D\u307E\u305B\u3093\u3002"
+          "0で割ることはできません。"
         );
       }
       context.runtime.set(
@@ -605,7 +699,7 @@
   // web/plugins/to_number.js
   var ToNumberPlugin = class extends WebPlugin {
     constructor() {
-      super("\u6570\u5B57\u306B\u3059\u308B");
+      super("数字にする");
     }
     async execute(line, context) {
       const expression = line.replace(/^数字にする\s*/, "");
@@ -622,7 +716,7 @@
   // web/plugins/to_string.js
   var ToStringPlugin = class extends WebPlugin {
     constructor() {
-      super("\u6587\u5B57\u306B\u3059\u308B");
+      super("文字にする");
     }
     async execute(line, context) {
       const expression = line.replace(/^文字にする\s*/, "");
@@ -639,7 +733,7 @@
   // web/plugins/concat.js
   var ConcatPlugin = class extends WebPlugin {
     constructor() {
-      super("\u6587\u5B57\u3092\u3064\u306A\u3050");
+      super("文字をつなぐ");
     }
     async execute(line, context) {
       const expression = line.replace(/^文字をつなぐ\s*/, "");
@@ -658,7 +752,7 @@
   // web/plugins/upper.js
   var UpperPlugin = class extends WebPlugin {
     constructor() {
-      super("\u5927\u6587\u5B57\u306B\u3059\u308B");
+      super("大文字にする");
     }
     async execute(line, context) {
       const expression = line.replace(/^大文字にする\s*/, "");
@@ -675,7 +769,7 @@
   // web/plugins/lower.js
   var LowerPlugin = class extends WebPlugin {
     constructor() {
-      super("\u5C0F\u6587\u5B57\u306B\u3059\u308B");
+      super("小文字にする");
     }
     async execute(line, context) {
       const expression = line.replace(/^小文字にする\s*/, "");
@@ -692,7 +786,7 @@
   // web/plugins/maximum.js
   var MaximumPlugin = class extends WebPlugin {
     constructor() {
-      super("\u6700\u5927");
+      super("最大");
     }
     async execute(line, context) {
       const expression = line.replace(/^最大\s*/, "");
@@ -713,7 +807,7 @@
   // web/plugins/minimum.js
   var MinimumPlugin = class extends WebPlugin {
     constructor() {
-      super("\u6700\u5C0F");
+      super("最小");
     }
     async execute(line, context) {
       const expression = line.replace(/^最小\s*/, "");
@@ -734,7 +828,7 @@
   // web/plugins/absolute.js
   var AbsolutePlugin = class extends WebPlugin {
     constructor() {
-      super("\u7D76\u5BFE\u5024");
+      super("絶対値");
     }
     async execute(line, context) {
       const expression = line.replace(/^絶対値\s*/, "");
@@ -753,7 +847,7 @@
   // web/plugins/round_number.js
   var RoundNumberPlugin = class extends WebPlugin {
     constructor() {
-      super("\u56DB\u6368\u4E94\u5165");
+      super("四捨五入");
     }
     async execute(line, context) {
       const expression = line.replace(/^四捨五入\s*/, "");
@@ -772,7 +866,7 @@
   // web/plugins/exists.js
   var ExistsPlugin = class extends WebPlugin {
     constructor() {
-      super("\u5B58\u5728\u3059\u308B");
+      super("存在する");
     }
     async execute(line, context) {
       const expression = line.replace(/^存在する\s*/, "");
@@ -786,7 +880,7 @@
   // web/plugins/average.js
   var AveragePlugin = class extends WebPlugin {
     constructor() {
-      super("\u5E73\u5747");
+      super("平均");
     }
     async execute(line, context) {
       const expression = line.replace(/^平均\s*/, "");
@@ -802,7 +896,7 @@
   // web/plugins/sum.js
   var SumPlugin = class extends WebPlugin {
     constructor() {
-      super("\u5408\u8A08");
+      super("合計");
     }
     async execute(line, context) {
       const expression = line.replace(/^合計\s*/, "");
@@ -818,7 +912,7 @@
   // web/plugins/range.js
   var RangePlugin = class extends WebPlugin {
     constructor() {
-      super("\u7BC4\u56F2");
+      super("範囲");
     }
     async execute(line, context) {
       const expression = line.replace(/^範囲\s*/, "");
@@ -834,7 +928,7 @@
   // web/plugins/even.js
   var EvenPlugin = class extends WebPlugin {
     constructor() {
-      super("\u5076\u6570\u304B");
+      super("偶数か");
     }
     async execute(line, context) {
       const expression = line.replace(/^偶数か\s*/, "");
@@ -848,7 +942,7 @@
   // web/plugins/odd.js
   var OddPlugin = class extends WebPlugin {
     constructor() {
-      super("\u5947\u6570\u304B");
+      super("奇数か");
     }
     async execute(line, context) {
       const expression = line.replace(/^奇数か\s*/, "");
@@ -862,7 +956,7 @@
   // web/plugins/positive.js
   var PositivePlugin = class extends WebPlugin {
     constructor() {
-      super("\u6B63\u6570\u304B");
+      super("正数か");
     }
     async execute(line, context) {
       const expression = line.replace(/^正数か\s*/, "");
@@ -876,7 +970,7 @@
   // web/plugins/negative.js
   var NegativePlugin = class extends WebPlugin {
     constructor() {
-      super("\u8CA0\u6570\u304B");
+      super("負数か");
     }
     async execute(line, context) {
       const expression = line.replace(/^負数か\s*/, "");
@@ -890,7 +984,7 @@
   // web/plugins/zero.js
   var ZeroPlugin = class extends WebPlugin {
     constructor() {
-      super("0\u304B");
+      super("0か");
     }
     async execute(line, context) {
       const expression = line.replace(/^0か\s*/, "");
@@ -904,7 +998,7 @@
   // web/plugins/string_length.js
   var StringLengthPlugin = class extends WebPlugin {
     constructor() {
-      super("\u6587\u5B57\u306E\u9577\u3055");
+      super("文字の長さ");
     }
     async execute(line, context) {
       const match = line.match(/^文字の長さ\s+「(.+)」$/);
@@ -916,7 +1010,7 @@
   // web/plugins/string_find.js
   var StringFindPlugin = class extends WebPlugin {
     constructor() {
-      super("\u6587\u5B57\u3092\u63A2\u3059");
+      super("文字を探す");
     }
     async execute(line, context) {
       const match = line.match(/^文字を探す\s+「(.+)」\s+「(.+)」$/);
@@ -930,7 +1024,7 @@
   // web/plugins/string_replace.js
   var StringReplacePlugin = class extends WebPlugin {
     constructor() {
-      super("\u6587\u5B57\u3092\u7F6E\u304D\u63DB\u3048\u308B");
+      super("文字を置き換える");
     }
     async execute(line, context) {
       const match = line.match(/^文字を置き換える\s+「(.+)」\s+「(.+)」\s+「(.+)」$/);
@@ -944,7 +1038,7 @@
   // web/plugins/string_slice.js
   var StringSlicePlugin = class extends WebPlugin {
     constructor() {
-      super("\u6587\u5B57\u3092\u5207\u308A\u51FA\u3059");
+      super("文字を切り出す");
     }
     async execute(line, context) {
       const match = line.match(/^文字を切り出す\s+「(.+)」\s+(.+)\s+(.+)$/);
@@ -964,7 +1058,7 @@
   // web/plugins/strip.js
   var StripPlugin = class extends WebPlugin {
     constructor() {
-      super("\u7A7A\u767D\u3092\u6D88\u3059");
+      super("空白を消す");
     }
     async execute(line, context) {
       const match = line.match(/^空白を消す\s+「(.+)」$/);
@@ -978,7 +1072,7 @@
   // web/plugins/contains.js
   var ContainsPlugin = class extends WebPlugin {
     constructor() {
-      super("\u6587\u5B57\u304C\u542B\u307E\u308C\u308B");
+      super("文字が含まれる");
     }
     async execute(line, context) {
       const match = line.match(/^文字が含まれる\s+「(.+)」\s+「(.+)」$/);
@@ -992,7 +1086,7 @@
   // web/plugins/sqrt.js
   var SqrtPlugin = class extends WebPlugin {
     constructor() {
-      super("\u5E73\u65B9\u6839");
+      super("平方根");
     }
     async execute(line, context) {
       const expression = line.replace(/^平方根\s*/, "");
@@ -1006,7 +1100,7 @@
   // web/plugins/power.js
   var PowerPlugin = class extends WebPlugin {
     constructor() {
-      super("\u3079\u304D\u4E57");
+      super("べき乗");
     }
     async execute(line, context) {
       const match = line.match(/^べき乗\s+(.+)\s+(.+)$/);
@@ -1024,7 +1118,7 @@
   // web/plugins/floor.js
   var FloorPlugin = class extends WebPlugin {
     constructor() {
-      super("\u5207\u308A\u6368\u3066");
+      super("切り捨て");
     }
     async execute(line, context) {
       const expression = line.replace(/^切り捨て\s*/, "");
@@ -1038,7 +1132,7 @@
   // web/plugins/ceil.js
   var CeilPlugin = class extends WebPlugin {
     constructor() {
-      super("\u5207\u308A\u4E0A\u3052");
+      super("切り上げ");
     }
     async execute(line, context) {
       const expression = line.replace(/^切り上げ\s*/, "");
@@ -1052,7 +1146,7 @@
   // web/plugins/random.js
   var RandomPlugin = class extends WebPlugin {
     constructor() {
-      super("\u4E71\u6570");
+      super("乱数");
     }
     async execute(line, context) {
       const match = line.match(/^乱数\s+(.+)\s+(.+)$/);
@@ -1072,7 +1166,7 @@
   // web/plugins/gcd.js
   var GcdPlugin = class extends WebPlugin {
     constructor() {
-      super("\u6700\u5927\u516C\u7D04\u6570");
+      super("最大公約数");
     }
     async execute(line, context) {
       const match = line.match(/^最大公約数\s+(.+)\s+(.+)$/);
@@ -1093,7 +1187,7 @@
   // web/plugins/lcm.js
   var LcmPlugin = class extends WebPlugin {
     constructor() {
-      super("\u6700\u5C0F\u516C\u500D\u6570");
+      super("最小公倍数");
     }
     async execute(line, context) {
       const match = line.match(/^最小公倍数\s+(.+)\s+(.+)$/);
@@ -1118,7 +1212,7 @@
   // web/plugins/prime.js
   var PrimePlugin = class extends WebPlugin {
     constructor() {
-      super("\u7D20\u6570\u304B");
+      super("素数か");
     }
     async execute(line, context) {
       const expression = line.replace(/^素数か\s*/, "");
@@ -1142,7 +1236,7 @@
   // web/plugins/factorial.js
   var FactorialPlugin = class extends WebPlugin {
     constructor() {
-      super("\u968E\u4E57");
+      super("階乗");
     }
     async execute(line, context) {
       const expression = line.replace(/^階乗\s*/, "");
@@ -1160,7 +1254,7 @@
   // web/plugins/sign.js
   var SignPlugin = class extends WebPlugin {
     constructor() {
-      super("\u7B26\u53F7");
+      super("符号");
     }
     async execute(line, context) {
       const expression = line.replace(/^符号\s*/, "");
@@ -1174,7 +1268,7 @@
   // web/plugins/negate.js
   var NegatePlugin = class extends WebPlugin {
     constructor() {
-      super("\u6570\u5024\u3092\u53CD\u8EE2");
+      super("数値を反転");
     }
     async execute(line, context) {
       const expression = line.replace(/^数値を反転\s*/, "");
@@ -1188,7 +1282,7 @@
   // web/plugins/binary.js
   var BinaryPlugin = class extends WebPlugin {
     constructor() {
-      super("\u6570\u5024\u30922\u9032\u6570\u306B\u3059\u308B");
+      super("数値を2進数にする");
     }
     async execute(line, context) {
       const expression = line.replace(/^数値を2進数にする\s*/, "");
@@ -1204,7 +1298,7 @@
   // web/plugins/hex.js
   var HexPlugin = class extends WebPlugin {
     constructor() {
-      super("\u6570\u5024\u309216\u9032\u6570\u306B\u3059\u308B");
+      super("数値を16進数にする");
     }
     async execute(line, context) {
       const expression = line.replace(/^数値を16進数にする\s*/, "");
@@ -1220,7 +1314,7 @@
   // web/plugins/binary_to_number.js
   var BinaryToNumberPlugin = class extends WebPlugin {
     constructor() {
-      super("2\u9032\u6570\u3092\u6570\u5B57\u306B\u3059\u308B");
+      super("2進数を数字にする");
     }
     async execute(line, context) {
       const match = line.match(/^2進数を数字にする\s+「(.+)」$/);
@@ -1234,7 +1328,7 @@
   // web/plugins/hex_to_number.js
   var HexToNumberPlugin = class extends WebPlugin {
     constructor() {
-      super("16\u9032\u6570\u3092\u6570\u5B57\u306B\u3059\u308B");
+      super("16進数を数字にする");
     }
     async execute(line, context) {
       const match = line.match(/^16進数を数字にする\s+「(.+)」$/);
@@ -1248,7 +1342,7 @@
   // web/plugins/in_range.js
   var InRangePlugin = class extends WebPlugin {
     constructor() {
-      super("\u6570\u5024\u306E\u7BC4\u56F2\u5185\u304B");
+      super("数値の範囲内か");
     }
     async execute(line, context) {
       const match = line.match(/^数値の範囲内か\s+(.+)\s+(.+)\s+(.+)$/);
@@ -1271,7 +1365,7 @@
   // web/plugins/reverse_number.js
   var ReverseNumberPlugin = class extends WebPlugin {
     constructor() {
-      super("\u6B63\u8CA0\u3092\u53CD\u8EE2");
+      super("正負を反転");
     }
     async execute(line, context) {
       const expression = line.replace(/^正負を反転\s*/, "");
@@ -1285,7 +1379,7 @@
   // web/plugins/decimal_part.js
   var DecimalPartPlugin = class extends WebPlugin {
     constructor() {
-      super("\u5C0F\u6570\u90E8\u5206");
+      super("小数部分");
     }
     async execute(line, context) {
       const expression = line.replace(/^小数部分\s*/, "");
@@ -1309,7 +1403,7 @@
   // web/plugins/integer_part.js
   var IntegerPartPlugin = class extends WebPlugin {
     constructor() {
-      super("\u6574\u6570\u90E8\u5206");
+      super("整数部分");
     }
     async execute(line, context) {
       const expression = line.replace(/^整数部分\s*/, "");
@@ -1323,7 +1417,7 @@
   // web/plugins/reverse_string.js
   var ReverseStringPlugin = class extends WebPlugin {
     constructor() {
-      super("\u6587\u5B57\u3092\u53CD\u8EE2");
+      super("文字を反転");
     }
     async execute(line, context) {
       const match = line.match(/^文字を反転\s+「(.+)」$/);
@@ -1337,7 +1431,7 @@
   // web/plugins/first_char.js
   var FirstCharPlugin = class extends WebPlugin {
     constructor() {
-      super("\u6587\u5B57\u306E\u5148\u982D");
+      super("文字の先頭");
     }
     async execute(line, context) {
       const match = line.match(/^文字の先頭\s+「(.+)」$/);
@@ -1351,7 +1445,7 @@
   // web/plugins/last_char.js
   var LastCharPlugin = class extends WebPlugin {
     constructor() {
-      super("\u6587\u5B57\u306E\u672B\u5C3E");
+      super("文字の末尾");
     }
     async execute(line, context) {
       const match = line.match(/^文字の末尾\s+「(.+)」$/);
@@ -1366,7 +1460,7 @@
   // web/plugins/is_number.js
   var IsNumberPlugin = class extends WebPlugin {
     constructor() {
-      super("\u6587\u5B57\u304C\u6570\u5B57\u304B");
+      super("文字が数字か");
     }
     async execute(line, context) {
       const match = line.match(/^文字が数字か\s+「(.+)」$/);
@@ -1380,7 +1474,7 @@
   // web/plugins/is_empty.js
   var IsEmptyPlugin = class extends WebPlugin {
     constructor() {
-      super("\u6587\u5B57\u304C\u7A7A\u304B");
+      super("文字が空か");
     }
     async execute(line, context) {
       const match = line.match(/^文字が空か\s+「(.*)」$/);
@@ -1394,7 +1488,7 @@
   // web/plugins/list.js
   var ListPlugin = class extends WebPlugin {
     constructor() {
-      super("\u30EA\u30B9\u30C8");
+      super("リスト");
     }
     async execute(line, context) {
       let match;
@@ -1414,7 +1508,7 @@
         const list = context.runtime.get(name);
         if (!Array.isArray(list)) {
           throw new Error(
-            `\u300C${name}\u300D\u306F\u30EA\u30B9\u30C8\u3067\u306F\u3042\u308A\u307E\u305B\u3093\u3002`
+            `「${name}」はリストではありません。`
           );
         }
         const value = context.parser.parseValue(
@@ -1432,7 +1526,7 @@
         const list = context.runtime.get(name);
         if (!Array.isArray(list)) {
           throw new Error(
-            `\u300C${name}\u300D\u306F\u30EA\u30B9\u30C8\u3067\u306F\u3042\u308A\u307E\u305B\u3093\u3002`
+            `「${name}」はリストではありません。`
           );
         }
         const value = context.parser.parseValue(
@@ -1453,7 +1547,7 @@
         const list = context.runtime.get(name);
         if (!Array.isArray(list)) {
           throw new Error(
-            `\u300C${name}\u300D\u306F\u30EA\u30B9\u30C8\u3067\u306F\u3042\u308A\u307E\u305B\u3093\u3002`
+            `「${name}」はリストではありません。`
           );
         }
         const index = Number(
@@ -1475,7 +1569,7 @@
         const list = context.runtime.get(name);
         if (!Array.isArray(list)) {
           throw new Error(
-            `\u300C${name}\u300D\u306F\u30EA\u30B9\u30C8\u3067\u306F\u3042\u308A\u307E\u305B\u3093\u3002`
+            `「${name}」はリストではありません。`
           );
         }
         context.runtime.write(
@@ -1484,7 +1578,28 @@
         return;
       }
       throw new Error(
-        `\u30EA\u30B9\u30C8\u306E\u66F8\u5F0F\u304C\u6B63\u3057\u304F\u3042\u308A\u307E\u305B\u3093: ${line}`
+        `リストの書式が正しくありません: ${line}`
+      );
+    }
+  };
+
+  // web/plugins/import_package.js
+  var ImportPackagePlugin = class extends WebPlugin {
+    constructor() {
+      super("読み込む");
+    }
+    matches(line) {
+      return /^読み込む「.+」$/.test(line);
+    }
+    async execute(line, context) {
+      const match = line.match(/^読み込む「(.+)」$/);
+      if (!match) {
+        throw new Error(
+          "読み込むの形式が正しくありません。"
+        );
+      }
+      await context.engine.importPackage(
+        match[1]
       );
     }
   };
@@ -1494,13 +1609,13 @@
     constructor(message, lineNumber = null, cause = null) {
       let text = "";
       if (lineNumber !== null) {
-        text += `\u884C\u756A\u53F7: ${lineNumber}
+        text += `行番号: ${lineNumber}
 `;
       }
-      text += `\u30A8\u30E9\u30FC: ${message}`;
+      text += `エラー: ${message}`;
       if (cause) {
         text += `
-\u539F\u56E0: ${cause}`;
+原因: ${cause}`;
       }
       super(text);
       this.name = "JapaneseLanguageError";
@@ -1510,10 +1625,11 @@
   };
   var WebEngine = class {
     constructor(output2 = null) {
-      this.version = "2.1.1";
+      this.version = "2.2.0";
       this.runtime = new Runtime(output2);
       this.parser = new JapaneseParser();
       this.plugins = new PluginManager();
+      this.packageManager = new PackageManager();
       this.registerPlugins();
     }
     registerPlugins() {
@@ -1576,6 +1692,18 @@
       this.plugins.register(new IsNumberPlugin());
       this.plugins.register(new IsEmptyPlugin());
       this.plugins.register(new ListPlugin());
+      this.plugins.register(new ImportPackagePlugin());
+    }
+    async importPackage(repository) {
+      const packageData = await this.packageManager.install(repository);
+      const lines = packageData.source.split(/\r?\n/);
+      this.validateBlocks(lines);
+      await this.executeLines(
+        lines,
+        0,
+        lines.length
+      );
+      return packageData;
     }
     getContext() {
       return {
@@ -1609,25 +1737,25 @@
         if (line.startsWith("//")) {
           continue;
         }
-        if (line === "\u7D42\u308F\u308A") {
+        if (line === "終わり") {
           return {
             index: i,
             type: "end"
           };
         }
-        if (line === "\u305D\u308C\u4EE5\u5916") {
+        if (line === "それ以外") {
           return {
             index: i,
             type: "else"
           };
         }
-        if (line === "\u629C\u3051\u308B") {
+        if (line === "抜ける") {
           return {
             index: i,
             type: "break"
           };
         }
-        if (line.startsWith("\u3082\u3057 ")) {
+        if (line.startsWith("もし ")) {
           const condition = line.replace(/^もし\s*/, "");
           const block = this.findBlock(
             lines,
@@ -1643,7 +1771,7 @@
           } catch (error) {
             throw this.createLineError(
               i + 1,
-              "\u6761\u4EF6\u5F0F\u3092\u8A55\u4FA1\u3067\u304D\u307E\u305B\u3093\u3002",
+              "条件式を評価できません。",
               error.message
             );
           }
@@ -1669,7 +1797,7 @@
           i = block.endIndex;
           continue;
         }
-        if (line.startsWith("\u7E70\u308A\u8FD4\u3059 ")) {
+        if (line.startsWith("繰り返す ")) {
           const expression = line.replace(/^繰り返す\s*/, "").replace(/回$/, "").trim();
           let count;
           try {
@@ -1680,15 +1808,15 @@
           } catch (error) {
             throw this.createLineError(
               i + 1,
-              "\u7E70\u308A\u8FD4\u3057\u56DE\u6570\u3092\u6570\u5024\u3068\u3057\u3066\u6271\u3048\u307E\u305B\u3093\u3002",
+              "繰り返し回数を数値として扱えません。",
               error.message
             );
           }
           if (!Number.isFinite(count)) {
             throw this.createLineError(
               i + 1,
-              "\u7E70\u308A\u8FD4\u3057\u56DE\u6570\u3092\u6570\u5024\u3068\u3057\u3066\u6271\u3048\u307E\u305B\u3093\u3002",
-              "\u300C\u7E70\u308A\u8FD4\u3059\u300D\u306B\u6307\u5B9A\u3059\u308B\u5024\u306F\u6570\u5024\u306B\u3057\u3066\u304F\u3060\u3055\u3044\u3002"
+              "繰り返し回数を数値として扱えません。",
+              "「繰り返す」に指定する値は数値にしてください。"
             );
           }
           count = Math.max(
@@ -1721,8 +1849,8 @@
           if (!handled) {
             throw this.createLineError(
               i + 1,
-              "\u7406\u89E3\u3067\u304D\u306A\u3044\u547D\u4EE4\u3067\u3059\u3002",
-              `\u300C${line}\u300D\u3068\u3044\u3046\u547D\u4EE4\u306F\u767B\u9332\u3055\u308C\u3066\u3044\u307E\u305B\u3093\u3002`
+              "理解できない命令です。",
+              `「${line}」という命令は登録されていません。`
             );
           }
         } catch (error) {
@@ -1731,7 +1859,7 @@
           }
           throw this.createLineError(
             i + 1,
-            "\u547D\u4EE4\u3092\u5B9F\u884C\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F\u3002",
+            "命令を実行できませんでした。",
             error.message
           );
         }
@@ -1745,7 +1873,7 @@
         if (!line || line.startsWith("//")) {
           continue;
         }
-        if (line.startsWith("\u3082\u3057 ")) {
+        if (line.startsWith("もし ")) {
           stack.push({
             type: "if",
             line: i + 1,
@@ -1753,7 +1881,7 @@
           });
           continue;
         }
-        if (line.startsWith("\u7E70\u308A\u8FD4\u3059 ")) {
+        if (line.startsWith("繰り返す ")) {
           stack.push({
             type: "loop",
             line: i + 1,
@@ -1761,38 +1889,38 @@
           });
           continue;
         }
-        if (line === "\u305D\u308C\u4EE5\u5916") {
+        if (line === "それ以外") {
           if (stack.length === 0) {
             throw this.createLineError(
               i + 1,
-              "\u300C\u305D\u308C\u4EE5\u5916\u300D\u306E\u5BFE\u5FDC\u3059\u308B\u300C\u3082\u3057\u300D\u304C\u3042\u308A\u307E\u305B\u3093\u3002",
-              "\u300C\u305D\u308C\u4EE5\u5916\u300D\u306F\u300C\u3082\u3057\u300D\u306E\u4E2D\u3067\u4F7F\u7528\u3057\u3066\u304F\u3060\u3055\u3044\u3002"
+              "「それ以外」の対応する「もし」がありません。",
+              "「それ以外」は「もし」の中で使用してください。"
             );
           }
           const current = stack[stack.length - 1];
           if (current.type !== "if") {
             throw this.createLineError(
               i + 1,
-              "\u300C\u305D\u308C\u4EE5\u5916\u300D\u3092\u3053\u3053\u3067\u306F\u4F7F\u7528\u3067\u304D\u307E\u305B\u3093\u3002",
-              "\u300C\u305D\u308C\u4EE5\u5916\u300D\u306F\u300C\u3082\u3057\u300D\u306E\u4E2D\u3067\u4F7F\u7528\u3057\u3066\u304F\u3060\u3055\u3044\u3002"
+              "「それ以外」をここでは使用できません。",
+              "「それ以外」は「もし」の中で使用してください。"
             );
           }
           if (current.hasElse) {
             throw this.createLineError(
               i + 1,
-              "\u300C\u305D\u308C\u4EE5\u5916\u300D\u3092\u8907\u6570\u56DE\u4F7F\u7528\u3057\u3066\u3044\u307E\u3059\u3002",
-              "1\u3064\u306E\u300C\u3082\u3057\u300D\u306B\u5BFE\u3057\u3066\u300C\u305D\u308C\u4EE5\u5916\u300D\u306F1\u56DE\u3060\u3051\u4F7F\u7528\u3067\u304D\u307E\u3059\u3002"
+              "「それ以外」を複数回使用しています。",
+              "1つの「もし」に対して「それ以外」は1回だけ使用できます。"
             );
           }
           current.hasElse = true;
           continue;
         }
-        if (line === "\u7D42\u308F\u308A") {
+        if (line === "終わり") {
           if (stack.length === 0) {
             throw this.createLineError(
               i + 1,
-              "\u5BFE\u5FDC\u3059\u308B\u30D6\u30ED\u30C3\u30AF\u304C\u3042\u308A\u307E\u305B\u3093\u3002",
-              "\u3053\u306E\u300C\u7D42\u308F\u308A\u300D\u306B\u5BFE\u5FDC\u3059\u308B\u300C\u3082\u3057\u300D\u307E\u305F\u306F\u300C\u7E70\u308A\u8FD4\u3059\u300D\u304C\u3042\u308A\u307E\u305B\u3093\u3002"
+              "対応するブロックがありません。",
+              "この「終わり」に対応する「もし」または「繰り返す」がありません。"
             );
           }
           stack.pop();
@@ -1801,11 +1929,11 @@
       }
       if (stack.length > 0) {
         const block = stack[stack.length - 1];
-        const blockName = block.type === "if" ? "\u3082\u3057" : "\u7E70\u308A\u8FD4\u3059";
+        const blockName = block.type === "if" ? "もし" : "繰り返す";
         throw this.createLineError(
           block.line,
-          `\u300C${blockName}\u300D\u306E\u30D6\u30ED\u30C3\u30AF\u304C\u9589\u3058\u3089\u308C\u3066\u3044\u307E\u305B\u3093\u3002`,
-          `\u3053\u306E\u300C${blockName}\u300D\u306B\u5BFE\u5FDC\u3059\u308B\u300C\u7D42\u308F\u308A\u300D\u3092\u8FFD\u52A0\u3057\u3066\u304F\u3060\u3055\u3044\u3002`
+          `「${blockName}」のブロックが閉じられていません。`,
+          `この「${blockName}」に対応する「終わり」を追加してください。`
         );
       }
     }
@@ -1814,11 +1942,11 @@
       let elseIndex = -1;
       for (let i = start; i < end; i++) {
         const line = lines[i].trim();
-        if (line.startsWith("\u3082\u3057 ") || line.startsWith("\u7E70\u308A\u8FD4\u3059 ")) {
+        if (line.startsWith("もし ") || line.startsWith("繰り返す ")) {
           depth++;
           continue;
         }
-        if (line === "\u7D42\u308F\u308A") {
+        if (line === "終わり") {
           depth--;
           if (depth === 0) {
             return {
@@ -1828,14 +1956,14 @@
           }
           continue;
         }
-        if (line === "\u305D\u308C\u4EE5\u5916" && depth === 1) {
+        if (line === "それ以外" && depth === 1) {
           elseIndex = i;
         }
       }
       throw this.createLineError(
         start + 1,
-        "\u30D6\u30ED\u30C3\u30AF\u3092\u9589\u3058\u3089\u308C\u307E\u305B\u3093\u3002",
-        "\u5BFE\u5FDC\u3059\u308B\u300C\u7D42\u308F\u308A\u300D\u304C\u3042\u308A\u307E\u305B\u3093\u3002"
+        "ブロックを閉じられません。",
+        "対応する「終わり」がありません。"
       );
     }
     createLineError(lineNumber, message, cause = null) {
@@ -1862,16 +1990,16 @@
   }
   async function runProgram() {
     output.textContent = "";
-    setStatus("\u5B9F\u884C\u4E2D...");
+    setStatus("実行中...");
     try {
       const engine = createEngine();
       await engine.run(
         editor.value
       );
-      setStatus("\u5B9F\u884C\u5B8C\u4E86");
+      setStatus("実行完了");
     } catch (error) {
       output.textContent = error?.message || String(error);
-      setStatus("\u5B9F\u884C\u30A8\u30E9\u30FC");
+      setStatus("実行エラー");
     }
   }
   function saveLocal() {
@@ -1883,7 +2011,7 @@
       "japanese-language-file-name",
       currentFileName
     );
-    setStatus("\u30ED\u30FC\u30AB\u30EB\u4FDD\u5B58\u3057\u307E\u3057\u305F");
+    setStatus("ローカル保存しました");
   }
   function loadLocal() {
     const savedCode = localStorage.getItem(
@@ -1903,7 +2031,7 @@
     editor.value = "";
     output.textContent = "";
     currentFileName = "program.jp";
-    setStatus("\u30AF\u30EA\u30A2\u3057\u307E\u3057\u305F");
+    setStatus("クリアしました");
   }
   function openFile() {
     const input = document.createElement("input");
@@ -1922,11 +2050,11 @@
         currentFileName = file.name;
         saveLocal();
         setStatus(
-          `${file.name} \u3092\u958B\u304D\u307E\u3057\u305F`
+          `${file.name} を開きました`
         );
       };
       reader.onerror = () => {
-        setStatus("\u30D5\u30A1\u30A4\u30EB\u3092\u8AAD\u307F\u8FBC\u3081\u307E\u305B\u3093\u3067\u3057\u305F");
+        setStatus("ファイルを読み込めませんでした");
       };
       reader.readAsText(
         file,
@@ -1952,12 +2080,12 @@
     URL.revokeObjectURL(url);
     saveLocal();
     setStatus(
-      `${currentFileName} \u3092\u4FDD\u5B58\u3057\u307E\u3057\u305F`
+      `${currentFileName} を保存しました`
     );
   }
   function saveAsFile() {
     const name = window.prompt(
-      "\u30D5\u30A1\u30A4\u30EB\u540D\u3092\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044",
+      "ファイル名を入力してください",
       currentFileName
     );
     if (name === null) {
@@ -2043,6 +2171,6 @@
   setupButtons();
   setupEditor();
   setStatus(
-    "Japanese Language Web v2.1.1"
+    "Japanese Language Web v2.2.0"
   );
 })();
