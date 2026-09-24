@@ -537,28 +537,28 @@
       super("増やす");
     }
     async execute(line, context) {
-      const match = line.match(
-        /^増やす\s+(.+?)\s+(.+)$/
-      );
+      const match = line.match(/^増やす\s+(.+?)\s+(.+)$/);
       if (!match) {
-        throw new Error(
-          `増やすの書式が正しくありません: ${line}`
-        );
+        throw new Error(`増やすの書式が正しくありません: ${line}`);
       }
-      const [, name, amountExpression] = match;
-      const current = Number(
-        context.runtime.get(name)
+      const [, target, amountExpression] = match;
+      const amount = context.parser.parseNumber(
+        amountExpression,
+        context.runtime
       );
-      const amount = Number(
-        context.parser.parseValue(
-          amountExpression,
+      if (context.runtime.exists(target)) {
+        const current2 = context.parser.parseNumber(
+          target,
           context.runtime
-        )
+        );
+        context.runtime.set(target, current2 + amount);
+        return;
+      }
+      const current = context.parser.parseNumber(
+        target,
+        context.runtime
       );
-      context.runtime.set(
-        name,
-        current + amount
-      );
+      context.runtime.write(current + amount);
     }
   };
 
@@ -568,28 +568,28 @@
       super("減らす");
     }
     async execute(line, context) {
-      const match = line.match(
-        /^減らす\s+(.+?)\s+(.+)$/
-      );
+      const match = line.match(/^減らす\s+(.+?)\s+(.+)$/);
       if (!match) {
-        throw new Error(
-          `減らすの書式が正しくありません: ${line}`
-        );
+        throw new Error(`減らすの書式が正しくありません: ${line}`);
       }
-      const [, name, amountExpression] = match;
-      const current = Number(
-        context.runtime.get(name)
+      const [, target, amountExpression] = match;
+      const amount = context.parser.parseNumber(
+        amountExpression,
+        context.runtime
       );
-      const amount = Number(
-        context.parser.parseValue(
-          amountExpression,
+      if (context.runtime.exists(target)) {
+        const current2 = context.parser.parseNumber(
+          target,
           context.runtime
-        )
+        );
+        context.runtime.set(target, current2 - amount);
+        return;
+      }
+      const current = context.parser.parseNumber(
+        target,
+        context.runtime
       );
-      context.runtime.set(
-        name,
-        current - amount
-      );
+      context.runtime.write(current - amount);
     }
   };
 
@@ -599,28 +599,28 @@
       super("掛ける");
     }
     async execute(line, context) {
-      const match = line.match(
-        /^掛ける\s+(.+?)\s+(.+)$/
-      );
+      const match = line.match(/^掛ける\s+(.+?)\s+(.+)$/);
       if (!match) {
-        throw new Error(
-          `掛けるの書式が正しくありません: ${line}`
-        );
+        throw new Error(`掛けるの書式が正しくありません: ${line}`);
       }
-      const [, name, expression] = match;
-      const current = Number(
-        context.runtime.get(name)
+      const [, target, expression] = match;
+      const value = context.parser.parseNumber(
+        expression,
+        context.runtime
       );
-      const value = Number(
-        context.parser.parseValue(
-          expression,
+      if (context.runtime.exists(target)) {
+        const current2 = context.parser.parseNumber(
+          target,
           context.runtime
-        )
+        );
+        context.runtime.set(target, current2 * value);
+        return;
+      }
+      const current = context.parser.parseNumber(
+        target,
+        context.runtime
       );
-      context.runtime.set(
-        name,
-        current * value
-      );
+      context.runtime.write(current * value);
     }
   };
 
@@ -630,33 +630,31 @@
       super("割る");
     }
     async execute(line, context) {
-      const match = line.match(
-        /^割る\s+(.+?)\s+(.+)$/
-      );
+      const match = line.match(/^割る\s+(.+?)\s+(.+)$/);
       if (!match) {
-        throw new Error(
-          `割るの書式が正しくありません: ${line}`
-        );
+        throw new Error(`割るの書式が正しくありません: ${line}`);
       }
-      const [, name, expression] = match;
-      const current = Number(
-        context.runtime.get(name)
-      );
-      const value = Number(
-        context.parser.parseValue(
-          expression,
-          context.runtime
-        )
+      const [, target, expression] = match;
+      const value = context.parser.parseNumber(
+        expression,
+        context.runtime
       );
       if (value === 0) {
-        throw new Error(
-          "0で割ることはできません。"
-        );
+        throw new Error("0で割ることはできません。");
       }
-      context.runtime.set(
-        name,
-        current / value
+      if (context.runtime.exists(target)) {
+        const current2 = context.parser.parseNumber(
+          target,
+          context.runtime
+        );
+        context.runtime.set(target, current2 / value);
+        return;
+      }
+      const current = context.parser.parseNumber(
+        target,
+        context.runtime
       );
+      context.runtime.write(current / value);
     }
   };
 
@@ -666,33 +664,31 @@
       super("余り");
     }
     async execute(line, context) {
-      const match = line.match(
-        /^余り\s+(.+?)\s+(.+)$/
-      );
+      const match = line.match(/^余り\s+(.+?)\s+(.+)$/);
       if (!match) {
-        throw new Error(
-          `余りの書式が正しくありません: ${line}`
-        );
+        throw new Error(`余りの書式が正しくありません: ${line}`);
       }
-      const [, name, expression] = match;
-      const current = Number(
-        context.runtime.get(name)
-      );
-      const value = Number(
-        context.parser.parseValue(
-          expression,
-          context.runtime
-        )
+      const [, target, expression] = match;
+      const value = context.parser.parseNumber(
+        expression,
+        context.runtime
       );
       if (value === 0) {
-        throw new Error(
-          "0で割ることはできません。"
-        );
+        throw new Error("0で割ることはできません。");
       }
-      context.runtime.set(
-        name,
-        current % value
+      if (context.runtime.exists(target)) {
+        const current2 = context.parser.parseNumber(
+          target,
+          context.runtime
+        );
+        context.runtime.set(target, current2 % value);
+        return;
+      }
+      const current = context.parser.parseNumber(
+        target,
+        context.runtime
       );
+      context.runtime.write(current % value);
     }
   };
 

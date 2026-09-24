@@ -9,6 +9,7 @@ class MinimumPlugin(Plugin):
         if not match:
             return None
 
-        values = match.group(1)
+        values = match.group(1).strip()
+        values = re.sub(r'\s+', ', ', values)
 
         return f"print(min({values}))"

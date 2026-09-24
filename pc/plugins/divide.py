@@ -4,12 +4,21 @@ from core.plugin import Plugin
 
 class DividePlugin(Plugin):
     def translate(self, line):
-        match = re.fullmatch(r'割る\s+(.+?)\s+(.+)', line)
+        match = re.fullmatch(
+            r'割る\s+(.+?)\s+(.+)',
+            line
+        )
 
         if not match:
             return None
 
-        name = match.group(1)
-        value = match.group(2)
+        target = match.group(1).strip()
+        value = match.group(2).strip()
 
-        return f"{name} /= {value}"
+        if re.fullmatch(r'-?\d+(?:\.\d+)?', target):
+            return f"print(({target}) / ({value}))"
+
+        if re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*|[^\W\d]\w*', target):
+            return f"{target} /= {value}"
+
+        return f"print(({target}) / ({value}))"

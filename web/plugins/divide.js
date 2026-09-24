@@ -1,4 +1,4 @@
-import { WebPlugin } from "../engine/plugin.js";
+﻿import { WebPlugin } from "../engine/plugin.js";
 
 export class DividePlugin extends WebPlugin {
     constructor() {
@@ -6,38 +6,38 @@ export class DividePlugin extends WebPlugin {
     }
 
     async execute(line, context) {
-        const match = line.match(
-            /^割る\s+(.+?)\s+(.+)$/
-        );
+        const match = line.match(/^割る\s+(.+?)\s+(.+)$/);
 
         if (!match) {
-            throw new Error(
-                `割るの書式が正しくありません: ${line}`
-            );
+            throw new Error(`割るの書式が正しくありません: ${line}`);
         }
 
-        const [, name, expression] = match;
+        const [, target, expression] = match;
 
-        const current = Number(
-            context.runtime.get(name)
-        );
-
-        const value = Number(
-            context.parser.parseValue(
-                expression,
-                context.runtime
-            )
+        const value = context.parser.parseNumber(
+            expression,
+            context.runtime
         );
 
         if (value === 0) {
-            throw new Error(
-                "0で割ることはできません。"
-            );
+            throw new Error("0で割ることはできません。");
         }
 
-        context.runtime.set(
-            name,
-            current / value
+        if (context.runtime.exists(target)) {
+            const current = context.parser.parseNumber(
+                target,
+                context.runtime
+            );
+
+            context.runtime.set(target, current / value);
+            return;
+        }
+
+        const current = context.parser.parseNumber(
+            target,
+            context.runtime
         );
+
+        context.runtime.write(current / value);
     }
 }

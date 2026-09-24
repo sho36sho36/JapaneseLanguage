@@ -1,4 +1,4 @@
-import { WebPlugin } from "../engine/plugin.js";
+﻿import { WebPlugin } from "../engine/plugin.js";
 
 export class DecreasePlugin extends WebPlugin {
     constructor() {
@@ -6,32 +6,34 @@ export class DecreasePlugin extends WebPlugin {
     }
 
     async execute(line, context) {
-        const match = line.match(
-            /^減らす\s+(.+?)\s+(.+)$/
-        );
+        const match = line.match(/^減らす\s+(.+?)\s+(.+)$/);
 
         if (!match) {
-            throw new Error(
-                `減らすの書式が正しくありません: ${line}`
-            );
+            throw new Error(`減らすの書式が正しくありません: ${line}`);
         }
 
-        const [, name, amountExpression] = match;
+        const [, target, amountExpression] = match;
 
-        const current = Number(
-            context.runtime.get(name)
+        const amount = context.parser.parseNumber(
+            amountExpression,
+            context.runtime
         );
 
-        const amount = Number(
-            context.parser.parseValue(
-                amountExpression,
+        if (context.runtime.exists(target)) {
+            const current = context.parser.parseNumber(
+                target,
                 context.runtime
-            )
+            );
+
+            context.runtime.set(target, current - amount);
+            return;
+        }
+
+        const current = context.parser.parseNumber(
+            target,
+            context.runtime
         );
 
-        context.runtime.set(
-            name,
-            current - amount
-        );
+        context.runtime.write(current - amount);
     }
 }
